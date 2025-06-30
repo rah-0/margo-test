@@ -9,7 +9,15 @@
 
 This repository contains tests and benchmarks for [MarGO](https://github.com/rah-0/margo), a simple, reflection-free ORM that maps MariaDB table schemas to Go structs.
 
-The `dbs` directory contains the output of MarGO's code generation, with structures and database interaction methods automatically generated from the database schema.
+The `dbs` directory contains the output of MarGO's code generation, with structures and database interaction methods automatically generated from the database schema. You can see examples of generated code [here](https://github.com/rah-0/margo-test/tree/master/dbs/Template).
+
+The generated code is completely self-contained, with no external package dependencies beyond the standard library.
+
+## Example Usage
+
+For examples of how to use the MarGO library internally, refer to the following test files:
+- [Entity usage examples](https://github.com/rah-0/margo-test/blob/master/dbs/Template/Alpha/entity_test.go)
+- [Custom queries usage examples](https://github.com/rah-0/margo-test/blob/master/dbs/Template/queries_test.go)
 
 ## About
 

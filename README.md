@@ -38,7 +38,4 @@ MarGO performs well in benchmarks, with performance metrics close to raw SQL:
 
 Unlike other ORMs that can introduce significant performance penalties, MarGO maintains speed while providing some convenience.
 
-
-# Here
-
 [![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/default-orange.png)](https://www.buymeacoffee.com/rah.0)

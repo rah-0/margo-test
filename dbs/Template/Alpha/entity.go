@@ -24,7 +24,7 @@ const (
 var (
 	Fields    = []string{FieldUuid, FieldFirstInsert, FieldLastUpdate, FieldAnimal, FieldBigNumber, FieldTestField}
 	db        *sql.DB
-	stmtMu    sync.Mutex
+	stmtMu    sync.RWMutex
 	stmtCache = make(map[string]*sql.Stmt)
 )
 
@@ -136,9 +136,15 @@ func GetBacktickedFields(fieldList []string) []string {
 }
 
 func getPreparedStmt(query string) (*sql.Stmt, error) {
+	stmtMu.RLock()
+	if stmt, ok := stmtCache[query]; ok {
+		stmtMu.RUnlock()
+		return stmt, nil
+	}
+	stmtMu.RUnlock()
+
 	stmtMu.Lock()
 	defer stmtMu.Unlock()
-
 	if stmt, ok := stmtCache[query]; ok {
 		return stmt, nil
 	}

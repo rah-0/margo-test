@@ -61,7 +61,7 @@ const (
 var (
 	Fields    = []string{FieldId, FieldTinySigned, FieldTinyUnsigned, FieldSmallSigned, FieldSmallUnsigned, FieldMediumSigned, FieldMediumUnsigned, FieldIntSigned, FieldIntUnsigned, FieldBigSigned, FieldBigUnsigned, FieldFloatField, FieldDoubleField, FieldRealField, FieldDecimalField, FieldDecField, FieldNumericField, FieldFixedField, FieldBit1, FieldBit8, FieldBit64, FieldBoolField, FieldBooleanField, FieldCharField, FieldVarcharField, FieldTextField, FieldTinytextField, FieldMediumtextField, FieldLongtextField, FieldEnumField, FieldSetField, FieldBinaryField, FieldVarbinaryField, FieldBlobField, FieldTinyblobField, FieldMediumblobField, FieldLongblobField, FieldDateField, FieldTimeField, FieldYearField, FieldDatetimeField, FieldTimestampField, FieldUuidField}
 	db        *sql.DB
-	stmtMu    sync.Mutex
+	stmtMu    sync.RWMutex
 	stmtCache = make(map[string]*sql.Stmt)
 )
 
@@ -506,9 +506,15 @@ func GetBacktickedFields(fieldList []string) []string {
 }
 
 func getPreparedStmt(query string) (*sql.Stmt, error) {
+	stmtMu.RLock()
+	if stmt, ok := stmtCache[query]; ok {
+		stmtMu.RUnlock()
+		return stmt, nil
+	}
+	stmtMu.RUnlock()
+
 	stmtMu.Lock()
 	defer stmtMu.Unlock()
-
 	if stmt, ok := stmtCache[query]; ok {
 		return stmt, nil
 	}

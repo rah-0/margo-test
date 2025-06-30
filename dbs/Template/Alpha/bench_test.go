@@ -12,6 +12,20 @@ import (
 	"gorm.io/gorm"
 )
 
+type Alpha struct {
+	bun.BaseModel `bun:"table:alpha"`
+	Uuid          string `bun:"Uuid,pk" gorm:"column:Uuid;primaryKey"`
+	FirstInsert   string `bun:"FirstInsert" gorm:"column:FirstInsert"`
+	LastUpdate    string `bun:"LastUpdate" gorm:"column:LastUpdate"`
+	Animal        string `bun:"Animal" gorm:"column:Animal"`
+	BigNumber     string `bun:"BigNumber" gorm:"column:BigNumber"`
+	TestField     string `bun:"test_field" gorm:"column:test_field"`
+}
+
+func (Alpha) TableName() string {
+	return "alpha"
+}
+
 func BenchmarkEntityDBInsertRawSQL(b *testing.B) {
 	_, err := DBTruncate()
 	if err != nil {
@@ -72,21 +86,11 @@ func BenchmarkEntityDBInsertBun(b *testing.B) {
 		b.Fatalf("setup failed: %v", err)
 	}
 
-	type AlphaEntity struct {
-		bun.BaseModel `bun:"table:alpha"`
-		Uuid          string `bun:"Uuid,pk"`
-		FirstInsert   string `bun:"FirstInsert"`
-		LastUpdate    string `bun:"LastUpdate"`
-		Animal        string `bun:"Animal"`
-		BigNumber     string `bun:"BigNumber"`
-		TestField     string `bun:"test_field"`
-	}
-
 	dbx := bun.NewDB(db, mysqldialect.New())
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		e := &AlphaEntity{
+		e := &Alpha{
 			Uuid:        uuid.NewString(),
 			FirstInsert: "2024-01-01 15:04:05.000000",
 			LastUpdate:  "2024-01-01 15:04:05.000000",
@@ -98,19 +102,6 @@ func BenchmarkEntityDBInsertBun(b *testing.B) {
 			b.Fatal(err)
 		}
 	}
-}
-
-type Alpha struct {
-	Uuid        string `gorm:"column:Uuid;primaryKey"`
-	FirstInsert string `gorm:"column:FirstInsert"`
-	LastUpdate  string `gorm:"column:LastUpdate"`
-	Animal      string `gorm:"column:Animal"`
-	BigNumber   string `gorm:"column:BigNumber"`
-	TestField   string `gorm:"column:test_field"`
-}
-
-func (Alpha) TableName() string {
-	return "alpha"
 }
 
 func BenchmarkEntityDBInsertGorm(b *testing.B) {
@@ -168,6 +159,31 @@ func BenchmarkEntityDBInsertXORM(b *testing.B) {
 			TestField:   "Test",
 		}
 		if _, err := cXorm.Insert(e); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkEntityDBInsertEnt(b *testing.B) {
+	_, err := DBTruncate()
+	if err != nil {
+		b.Fatalf("setup failed: %v", err)
+	}
+
+	ctx := context.Background()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, err := cEnt.Alpha.Create().
+			SetUUID(uuid.NewString()).
+			SetFirstInsert("2024-01-01 15:04:05.000000").
+			SetLastUpdate("2024-01-01 15:04:05.000000").
+			SetAnimal("Animal").
+			SetBigNumber("1234567890").
+			SetTestField("Test").
+			Save(ctx)
+
+		if err != nil {
 			b.Fatal(err)
 		}
 	}

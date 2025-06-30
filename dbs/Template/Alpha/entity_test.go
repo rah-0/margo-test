@@ -2,9 +2,7 @@ package Alpha
 
 import (
 	"database/sql"
-	"runtime"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/rah-0/testmark/testutil"
@@ -12,28 +10,38 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
+	"github.com/rah-0/margo-test/ent"
 	"github.com/rah-0/margo-test/util"
 )
 
 var (
 	c     *sql.DB
 	cXorm *xorm.Engine
+	cEnt  *ent.Client
 )
 
 func TestMain(m *testing.M) {
 	testutil.TestMainWrapper(testutil.TestConfig{
 		M: m,
 		LoadResources: func() error {
+			dsn := util.GetDsn()
 			var err error
-			c, cXorm, err = util.GetConn()
 
-			c.SetMaxIdleConns(runtime.NumCPU())
-			c.SetConnMaxLifetime(time.Minute * 5)
-			c.SetConnMaxIdleTime(time.Minute * 1)
+			c, err = sql.Open("mysql", dsn)
+			if err != nil {
+				return err
+			}
 
-			cXorm.SetMaxIdleConns(runtime.NumCPU())
-			cXorm.SetConnMaxLifetime(time.Minute * 5)
-			cXorm.SetConnMaxIdleTime(time.Minute * 1)
+			cXorm, err = xorm.NewEngine("mysql", dsn)
+			if err != nil {
+				return err
+			}
+
+			cEnt, err = ent.Open("mysql", dsn)
+			if err != nil {
+				return err
+			}
+
 			SetDB(c)
 			return err
 		},
@@ -44,6 +52,11 @@ func TestMain(m *testing.M) {
 			}
 
 			err = cXorm.Close()
+			if err != nil {
+				return err
+			}
+
+			err = cEnt.Close()
 			if err != nil {
 				return err
 			}

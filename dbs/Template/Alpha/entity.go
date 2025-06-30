@@ -38,9 +38,7 @@ type Entity struct {
 }
 
 func SetDB(x *sql.DB) {
-	if x != nil {
-		db = x
-	}
+	db = x
 }
 
 func (x *Entity) GetFieldValues(fieldList []string) []any {

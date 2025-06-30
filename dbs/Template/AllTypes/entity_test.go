@@ -3,14 +3,11 @@ package AllTypes
 import (
 	"bytes"
 	"database/sql"
-	"runtime"
 	"testing"
-	"time"
-
-	"github.com/google/uuid"
-	"github.com/rah-0/testmark/testutil"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
+	"github.com/rah-0/testmark/testutil"
 
 	"github.com/rah-0/margo-test/util"
 )
@@ -23,11 +20,14 @@ func TestMain(m *testing.M) {
 	testutil.TestMainWrapper(testutil.TestConfig{
 		M: m,
 		LoadResources: func() error {
+			dsn := util.GetDsn()
 			var err error
-			c, _, err = util.GetConn()
-			c.SetMaxIdleConns(runtime.NumCPU())
-			c.SetConnMaxLifetime(time.Minute * 5)
-			c.SetConnMaxIdleTime(time.Minute * 1)
+
+			c, err = sql.Open("mysql", dsn)
+			if err != nil {
+				return err
+			}
+
 			SetDB(c)
 			return err
 		},

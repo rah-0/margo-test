@@ -1175,3 +1175,67 @@ func (x *Entity) DBFindOrCreateContext(ctx context.Context, fields []string) err
 	}
 	return nil
 }
+
+func (x *Entity) DBSubquerySelectAllWhereAll(fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
+	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
+		" WHERE (" + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? AND ") + " = ?) " + subquery
+	stmt, err := getPreparedStmt(query)
+	if err != nil {
+		return nil, err
+	}
+	allArgs := append(x.GetFieldValues(fieldsToMatch), args...)
+	rows, err := stmt.Query(allArgs...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return readRows(rows)
+}
+
+func (x *Entity) DBSubquerySelectAllWhereAllContext(ctx context.Context, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
+	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
+		" WHERE (" + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? AND ") + " = ?) " + subquery
+	stmt, err := getPreparedStmt(query)
+	if err != nil {
+		return nil, err
+	}
+	allArgs := append(x.GetFieldValues(fieldsToMatch), args...)
+	rows, err := stmt.QueryContext(ctx, allArgs...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return readRows(rows)
+}
+
+func (x *Entity) DBSubquerySelectAllWhereAny(fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
+	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
+		" WHERE (" + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? OR ") + " = ?) " + subquery
+	stmt, err := getPreparedStmt(query)
+	if err != nil {
+		return nil, err
+	}
+	allArgs := append(x.GetFieldValues(fieldsToMatch), args...)
+	rows, err := stmt.Query(allArgs...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return readRows(rows)
+}
+
+func (x *Entity) DBSubquerySelectAllWhereAnyContext(ctx context.Context, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
+	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
+		" WHERE (" + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? OR ") + " = ?) " + subquery
+	stmt, err := getPreparedStmt(query)
+	if err != nil {
+		return nil, err
+	}
+	allArgs := append(x.GetFieldValues(fieldsToMatch), args...)
+	rows, err := stmt.QueryContext(ctx, allArgs...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return readRows(rows)
+}

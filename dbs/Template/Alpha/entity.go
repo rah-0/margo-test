@@ -154,8 +154,8 @@ func getPreparedStmt(query string) (*sql.Stmt, error) {
 	return stmt, nil
 }
 
-func scanRow(rows *sql.Rows) (Entity, error) {
-	var x Entity
+func scanRow(rows *sql.Rows) (*Entity, error) {
+	x := &Entity{}
 	var ptrUuid *string
 	var ptrFirstInsert *string
 	var ptrLastUpdate *string
@@ -171,7 +171,7 @@ func scanRow(rows *sql.Rows) (Entity, error) {
 		&ptrTestField,
 	)
 	if err != nil {
-		return x, err
+		return nil, err
 	}
 	if ptrUuid != nil {
 		x.Uuid = *ptrUuid
@@ -206,9 +206,9 @@ func scanRow(rows *sql.Rows) (Entity, error) {
 	return x, nil
 }
 
-func readRows(rows *sql.Rows) ([]Entity, error) {
+func readRows(rows *sql.Rows) ([]*Entity, error) {
 	defer rows.Close()
-	var results []Entity
+	var results []*Entity
 	for rows.Next() {
 		x, err := scanRow(rows)
 		if err != nil {
@@ -331,7 +331,7 @@ func (x *Entity) DBUpdateWhereAnyContext(ctx context.Context, fieldsToUpdate, fi
 	return stmt.ExecContext(ctx, values...)
 }
 
-func DBSelectAll() ([]Entity, error) {
+func DBSelectAll() ([]*Entity, error) {
 	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
@@ -345,7 +345,7 @@ func DBSelectAll() ([]Entity, error) {
 	return readRows(rows)
 }
 
-func DBSelectAllContext(ctx context.Context) ([]Entity, error) {
+func DBSelectAllContext(ctx context.Context) ([]*Entity, error) {
 	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
@@ -359,7 +359,7 @@ func DBSelectAllContext(ctx context.Context) ([]Entity, error) {
 	return readRows(rows)
 }
 
-func (x *Entity) DBSelectAllWhereAll(fieldsToMatch []string) ([]Entity, error) {
+func (x *Entity) DBSelectAllWhereAll(fieldsToMatch []string) ([]*Entity, error) {
 	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
 		" WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? AND ") + " = ?"
 	stmt, err := getPreparedStmt(query)
@@ -374,7 +374,7 @@ func (x *Entity) DBSelectAllWhereAll(fieldsToMatch []string) ([]Entity, error) {
 	return readRows(rows)
 }
 
-func (x *Entity) DBSelectAllWhereAllContext(ctx context.Context, fieldsToMatch []string) ([]Entity, error) {
+func (x *Entity) DBSelectAllWhereAllContext(ctx context.Context, fieldsToMatch []string) ([]*Entity, error) {
 	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
 		" WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? AND ") + " = ?"
 	stmt, err := getPreparedStmt(query)
@@ -389,7 +389,7 @@ func (x *Entity) DBSelectAllWhereAllContext(ctx context.Context, fieldsToMatch [
 	return readRows(rows)
 }
 
-func (x *Entity) DBSelectAllWhereAny(fieldsToMatch []string) ([]Entity, error) {
+func (x *Entity) DBSelectAllWhereAny(fieldsToMatch []string) ([]*Entity, error) {
 	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
 		" WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? OR ") + " = ?"
 	stmt, err := getPreparedStmt(query)
@@ -404,7 +404,7 @@ func (x *Entity) DBSelectAllWhereAny(fieldsToMatch []string) ([]Entity, error) {
 	return readRows(rows)
 }
 
-func (x *Entity) DBSelectAllWhereAnyContext(ctx context.Context, fieldsToMatch []string) ([]Entity, error) {
+func (x *Entity) DBSelectAllWhereAnyContext(ctx context.Context, fieldsToMatch []string) ([]*Entity, error) {
 	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
 		" WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? OR ") + " = ?"
 	stmt, err := getPreparedStmt(query)
@@ -438,7 +438,7 @@ func (x *Entity) DBExists(fields []string) (bool, error) {
 	if len(results) == 0 {
 		return false, nil
 	}
-	*x = results[0]
+	*x = *results[0]
 	return true, nil
 }
 
@@ -461,7 +461,7 @@ func (x *Entity) DBExistsContext(ctx context.Context, fields []string) (bool, er
 	if len(results) == 0 {
 		return false, nil
 	}
-	*x = results[0]
+	*x = *results[0]
 	return true, nil
 }
 
@@ -507,4 +507,42 @@ func (x *Entity) DBCountWhereAnyContext(ctx context.Context, fields []string) (i
 	var count int
 	err = stmt.QueryRowContext(ctx, x.GetFieldValues(fields)...).Scan(&count)
 	return count, err
+}
+
+func (x *Entity) DBFindOrCreate(fields []string) error {
+	exists, err := x.DBExists(fields)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+	_, err = x.DBInsert(fields)
+	if err != nil {
+		return err
+	}
+	_, err = x.DBExists(fields)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (x *Entity) DBFindOrCreateContext(ctx context.Context, fields []string) error {
+	exists, err := x.DBExistsContext(ctx, fields)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+	_, err = x.DBInsertContext(ctx, fields)
+	if err != nil {
+		return err
+	}
+	_, err = x.DBExistsContext(ctx, fields)
+	if err != nil {
+		return err
+	}
+	return nil
 }

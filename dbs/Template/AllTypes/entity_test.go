@@ -3,6 +3,8 @@ package AllTypes
 import (
 	"bytes"
 	"database/sql"
+	"math/rand"
+	"strconv"
 	"testing"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -44,7 +46,7 @@ func TestMain(m *testing.M) {
 func TestAllFieldsRoundtrip(t *testing.T) {
 	u := uuid.New().String()
 	e := Entity{
-		Id:              "1",
+		Id:              strconv.Itoa(rand.Intn(1_000_000_000)),
 		TinySigned:      "42",
 		TinyUnsigned:    "42",
 		SmallSigned:     "42",
@@ -102,7 +104,7 @@ func TestAllFieldsRoundtrip(t *testing.T) {
 	var found *Entity
 	for i := range list {
 		if list[i].UuidField == u {
-			found = &list[i]
+			found = list[i]
 			break
 		}
 	}

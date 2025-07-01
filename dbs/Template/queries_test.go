@@ -302,17 +302,22 @@ func TestQueryUpdateTestField(t *testing.T) {
 		t.Fatal("update query failed:", err)
 	}
 
-	// Verify the change
-	entity := &Alpha.Entity{Uuid: u}
-	ok, err := entity.DBExists([]string{Alpha.FieldUuid})
+	list, err := Alpha.DBSelectAll()
 	if err != nil {
-		t.Fatal("existence check failed:", err)
+		t.Fatal("select failed:", err)
 	}
-	if !ok {
+	var found *Alpha.Entity
+	for _, item := range list {
+		if item != nil && item.Uuid == u {
+			found = item
+			break
+		}
+	}
+	if found == nil {
 		t.Fatal("expected row not found after update")
 	}
-	if entity.TestField != "updated" {
-		t.Errorf("expected test_field = updated, got: %s", entity.TestField)
+	if found.TestField != "updated" {
+		t.Errorf("expected test_field = updated, got: %s", found.TestField)
 	}
 }
 

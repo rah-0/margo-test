@@ -9,6 +9,10 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"sync"
+
+	"github.com/rah-0/margo-test/dbs/Template/AllTypes"
+	"github.com/rah-0/margo-test/dbs/Template/Alpha"
+	"github.com/rah-0/margo-test/dbs/Template/Beta"
 )
 
 var (
@@ -45,6 +49,10 @@ func SetDB(x *sql.DB) error {
 		}
 		q.Query = string(b)
 	}
+
+	AllTypes.SetDB(x)
+	Alpha.SetDB(x)
+	Beta.SetDB(x)
 
 	return nil
 }

@@ -359,6 +359,34 @@ func DBSelectAllContext(ctx context.Context) ([]*Entity, error) {
 	return readRows(rows)
 }
 
+func DBSelectAllWithFields(fields []string) ([]*Entity, error) {
+	query := "SELECT " + strings.Join(GetBacktickedFields(fields), ", ") + " FROM " + FQTN
+	stmt, err := getPreparedStmt(query)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return readRows(rows)
+}
+
+func DBSelectAllWithFieldsContext(ctx context.Context, fields []string) ([]*Entity, error) {
+	query := "SELECT " + strings.Join(GetBacktickedFields(fields), ", ") + " FROM " + FQTN
+	stmt, err := getPreparedStmt(query)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := stmt.QueryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return readRows(rows)
+}
+
 func DBSubquerySelectAll(subquery string, args ...any) ([]*Entity, error) {
 	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN + " " + subquery
 	stmt, err := getPreparedStmt(query)

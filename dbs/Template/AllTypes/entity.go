@@ -1108,6 +1108,34 @@ func DBSubquerySelectAllContext(ctx context.Context, subquery string, args ...an
 	return readRows(Fields, rows)
 }
 
+func DBSubquerySelectAllWithFields(fields []string, subquery string, args ...any) ([]*Entity, error) {
+	query := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN + " " + subquery
+	stmt, err := getPreparedStmt(query)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := stmt.Query(args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return readRows(fields, rows)
+}
+
+func DBSubquerySelectAllWithFieldsContext(ctx context.Context, fields []string, subquery string, args ...any) ([]*Entity, error) {
+	query := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN + " " + subquery
+	stmt, err := getPreparedStmt(query)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := stmt.QueryContext(ctx, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return readRows(fields, rows)
+}
+
 func (x *Entity) DBSelectAllWhereAll(fieldsToMatch []string) ([]*Entity, error) {
 	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
 		" WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"

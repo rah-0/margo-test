@@ -524,99 +524,151 @@ func getPreparedStmt(query string) (*sql.Stmt, error) {
 	return stmt, nil
 }
 
-func scanRow(rows *sql.Rows) (*Entity, error) {
+func scanRow(fields []string, rows *sql.Rows) (*Entity, error) {
 	x := &Entity{}
-	var ptrId *string
-	var ptrTinySigned *string
-	var ptrTinyUnsigned *string
-	var ptrSmallSigned *string
-	var ptrSmallUnsigned *string
-	var ptrMediumSigned *string
-	var ptrMediumUnsigned *string
-	var ptrIntSigned *string
-	var ptrIntUnsigned *string
-	var ptrBigSigned *string
-	var ptrBigUnsigned *string
-	var ptrFloatField *string
-	var ptrDoubleField *string
-	var ptrRealField *string
-	var ptrDecimalField *string
-	var ptrDecField *string
-	var ptrNumericField *string
-	var ptrFixedField *string
-	var ptrBit1 *string
-	var ptrBit8 *string
-	var ptrBit64 *string
-	var ptrBoolField *string
-	var ptrBooleanField *string
-	var ptrCharField *string
-	var ptrVarcharField *string
-	var ptrTextField *string
-	var ptrTinytextField *string
-	var ptrMediumtextField *string
-	var ptrLongtextField *string
-	var ptrEnumField *string
-	var ptrSetField *string
-	var ptrBinaryField *string
-	var ptrVarbinaryField *string
-	var ptrBlobField *string
-	var ptrTinyblobField *string
-	var ptrMediumblobField *string
-	var ptrLongblobField *string
-	var ptrDateField *string
-	var ptrTimeField *string
-	var ptrYearField *string
-	var ptrDatetimeField *string
-	var ptrTimestampField *string
-	var ptrUuidField *string
-	err := rows.Scan(
-		&ptrId,
-		&ptrTinySigned,
-		&ptrTinyUnsigned,
-		&ptrSmallSigned,
-		&ptrSmallUnsigned,
-		&ptrMediumSigned,
-		&ptrMediumUnsigned,
-		&ptrIntSigned,
-		&ptrIntUnsigned,
-		&ptrBigSigned,
-		&ptrBigUnsigned,
-		&ptrFloatField,
-		&ptrDoubleField,
-		&ptrRealField,
-		&ptrDecimalField,
-		&ptrDecField,
-		&ptrNumericField,
-		&ptrFixedField,
-		&ptrBit1,
-		&ptrBit8,
-		&ptrBit64,
-		&ptrBoolField,
-		&ptrBooleanField,
-		&ptrCharField,
-		&ptrVarcharField,
-		&ptrTextField,
-		&ptrTinytextField,
-		&ptrMediumtextField,
-		&ptrLongtextField,
-		&ptrEnumField,
-		&ptrSetField,
-		&ptrBinaryField,
-		&ptrVarbinaryField,
-		&ptrBlobField,
-		&ptrTinyblobField,
-		&ptrMediumblobField,
-		&ptrLongblobField,
-		&ptrDateField,
-		&ptrTimeField,
-		&ptrYearField,
-		&ptrDatetimeField,
-		&ptrTimestampField,
-		&ptrUuidField,
+	var (
+		ptrId              *string
+		ptrTinySigned      *string
+		ptrTinyUnsigned    *string
+		ptrSmallSigned     *string
+		ptrSmallUnsigned   *string
+		ptrMediumSigned    *string
+		ptrMediumUnsigned  *string
+		ptrIntSigned       *string
+		ptrIntUnsigned     *string
+		ptrBigSigned       *string
+		ptrBigUnsigned     *string
+		ptrFloatField      *string
+		ptrDoubleField     *string
+		ptrRealField       *string
+		ptrDecimalField    *string
+		ptrDecField        *string
+		ptrNumericField    *string
+		ptrFixedField      *string
+		ptrBit1            *string
+		ptrBit8            *string
+		ptrBit64           *string
+		ptrBoolField       *string
+		ptrBooleanField    *string
+		ptrCharField       *string
+		ptrVarcharField    *string
+		ptrTextField       *string
+		ptrTinytextField   *string
+		ptrMediumtextField *string
+		ptrLongtextField   *string
+		ptrEnumField       *string
+		ptrSetField        *string
+		ptrBinaryField     *string
+		ptrVarbinaryField  *string
+		ptrBlobField       *string
+		ptrTinyblobField   *string
+		ptrMediumblobField *string
+		ptrLongblobField   *string
+		ptrDateField       *string
+		ptrTimeField       *string
+		ptrYearField       *string
+		ptrDatetimeField   *string
+		ptrTimestampField  *string
+		ptrUuidField       *string
+		scanTargets        []any
 	)
+
+	for _, field := range fields {
+		switch field {
+		case FieldId:
+			scanTargets = append(scanTargets, &ptrId)
+		case FieldTinySigned:
+			scanTargets = append(scanTargets, &ptrTinySigned)
+		case FieldTinyUnsigned:
+			scanTargets = append(scanTargets, &ptrTinyUnsigned)
+		case FieldSmallSigned:
+			scanTargets = append(scanTargets, &ptrSmallSigned)
+		case FieldSmallUnsigned:
+			scanTargets = append(scanTargets, &ptrSmallUnsigned)
+		case FieldMediumSigned:
+			scanTargets = append(scanTargets, &ptrMediumSigned)
+		case FieldMediumUnsigned:
+			scanTargets = append(scanTargets, &ptrMediumUnsigned)
+		case FieldIntSigned:
+			scanTargets = append(scanTargets, &ptrIntSigned)
+		case FieldIntUnsigned:
+			scanTargets = append(scanTargets, &ptrIntUnsigned)
+		case FieldBigSigned:
+			scanTargets = append(scanTargets, &ptrBigSigned)
+		case FieldBigUnsigned:
+			scanTargets = append(scanTargets, &ptrBigUnsigned)
+		case FieldFloatField:
+			scanTargets = append(scanTargets, &ptrFloatField)
+		case FieldDoubleField:
+			scanTargets = append(scanTargets, &ptrDoubleField)
+		case FieldRealField:
+			scanTargets = append(scanTargets, &ptrRealField)
+		case FieldDecimalField:
+			scanTargets = append(scanTargets, &ptrDecimalField)
+		case FieldDecField:
+			scanTargets = append(scanTargets, &ptrDecField)
+		case FieldNumericField:
+			scanTargets = append(scanTargets, &ptrNumericField)
+		case FieldFixedField:
+			scanTargets = append(scanTargets, &ptrFixedField)
+		case FieldBit1:
+			scanTargets = append(scanTargets, &ptrBit1)
+		case FieldBit8:
+			scanTargets = append(scanTargets, &ptrBit8)
+		case FieldBit64:
+			scanTargets = append(scanTargets, &ptrBit64)
+		case FieldBoolField:
+			scanTargets = append(scanTargets, &ptrBoolField)
+		case FieldBooleanField:
+			scanTargets = append(scanTargets, &ptrBooleanField)
+		case FieldCharField:
+			scanTargets = append(scanTargets, &ptrCharField)
+		case FieldVarcharField:
+			scanTargets = append(scanTargets, &ptrVarcharField)
+		case FieldTextField:
+			scanTargets = append(scanTargets, &ptrTextField)
+		case FieldTinytextField:
+			scanTargets = append(scanTargets, &ptrTinytextField)
+		case FieldMediumtextField:
+			scanTargets = append(scanTargets, &ptrMediumtextField)
+		case FieldLongtextField:
+			scanTargets = append(scanTargets, &ptrLongtextField)
+		case FieldEnumField:
+			scanTargets = append(scanTargets, &ptrEnumField)
+		case FieldSetField:
+			scanTargets = append(scanTargets, &ptrSetField)
+		case FieldBinaryField:
+			scanTargets = append(scanTargets, &ptrBinaryField)
+		case FieldVarbinaryField:
+			scanTargets = append(scanTargets, &ptrVarbinaryField)
+		case FieldBlobField:
+			scanTargets = append(scanTargets, &ptrBlobField)
+		case FieldTinyblobField:
+			scanTargets = append(scanTargets, &ptrTinyblobField)
+		case FieldMediumblobField:
+			scanTargets = append(scanTargets, &ptrMediumblobField)
+		case FieldLongblobField:
+			scanTargets = append(scanTargets, &ptrLongblobField)
+		case FieldDateField:
+			scanTargets = append(scanTargets, &ptrDateField)
+		case FieldTimeField:
+			scanTargets = append(scanTargets, &ptrTimeField)
+		case FieldYearField:
+			scanTargets = append(scanTargets, &ptrYearField)
+		case FieldDatetimeField:
+			scanTargets = append(scanTargets, &ptrDatetimeField)
+		case FieldTimestampField:
+			scanTargets = append(scanTargets, &ptrTimestampField)
+		case FieldUuidField:
+			scanTargets = append(scanTargets, &ptrUuidField)
+		}
+	}
+
+	err := rows.Scan(scanTargets...)
 	if err != nil {
 		return nil, err
 	}
+
 	if ptrId != nil {
 		x.Id = *ptrId
 	} else {
@@ -835,11 +887,11 @@ func scanRow(rows *sql.Rows) (*Entity, error) {
 	return x, nil
 }
 
-func readRows(rows *sql.Rows) ([]*Entity, error) {
+func readRows(fields []string, rows *sql.Rows) ([]*Entity, error) {
 	defer rows.Close()
 	var results []*Entity
 	for rows.Next() {
-		x, err := scanRow(rows)
+		x, err := scanRow(fields, rows)
 		if err != nil {
 			return results, err
 		}
@@ -971,7 +1023,7 @@ func DBSelectAll() ([]*Entity, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func DBSelectAllContext(ctx context.Context) ([]*Entity, error) {
@@ -985,7 +1037,7 @@ func DBSelectAllContext(ctx context.Context) ([]*Entity, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func DBSelectAllWithFields(fields []string) ([]*Entity, error) {
@@ -999,7 +1051,7 @@ func DBSelectAllWithFields(fields []string) ([]*Entity, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(fields, rows)
 }
 
 func DBSelectAllWithFieldsContext(ctx context.Context, fields []string) ([]*Entity, error) {
@@ -1013,7 +1065,7 @@ func DBSelectAllWithFieldsContext(ctx context.Context, fields []string) ([]*Enti
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(fields, rows)
 }
 
 func DBSubquerySelectAll(subquery string, args ...any) ([]*Entity, error) {
@@ -1027,7 +1079,7 @@ func DBSubquerySelectAll(subquery string, args ...any) ([]*Entity, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func DBSubquerySelectAllContext(ctx context.Context, subquery string, args ...any) ([]*Entity, error) {
@@ -1041,7 +1093,7 @@ func DBSubquerySelectAllContext(ctx context.Context, subquery string, args ...an
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSelectAllWhereAll(fieldsToMatch []string) ([]*Entity, error) {
@@ -1056,7 +1108,7 @@ func (x *Entity) DBSelectAllWhereAll(fieldsToMatch []string) ([]*Entity, error) 
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSelectAllWhereAllContext(ctx context.Context, fieldsToMatch []string) ([]*Entity, error) {
@@ -1071,7 +1123,7 @@ func (x *Entity) DBSelectAllWhereAllContext(ctx context.Context, fieldsToMatch [
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSelectAllWhereAny(fieldsToMatch []string) ([]*Entity, error) {
@@ -1086,7 +1138,7 @@ func (x *Entity) DBSelectAllWhereAny(fieldsToMatch []string) ([]*Entity, error) 
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSelectAllWhereAnyContext(ctx context.Context, fieldsToMatch []string) ([]*Entity, error) {
@@ -1101,7 +1153,7 @@ func (x *Entity) DBSelectAllWhereAnyContext(ctx context.Context, fieldsToMatch [
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBExists(fields []string) (bool, error) {
@@ -1116,7 +1168,7 @@ func (x *Entity) DBExists(fields []string) (bool, error) {
 		return false, err
 	}
 	defer rows.Close()
-	results, err := readRows(rows)
+	results, err := readRows(Fields, rows)
 	if err != nil {
 		return false, err
 	}
@@ -1139,7 +1191,7 @@ func (x *Entity) DBExistsContext(ctx context.Context, fields []string) (bool, er
 		return false, err
 	}
 	defer rows.Close()
-	results, err := readRows(rows)
+	results, err := readRows(Fields, rows)
 	if err != nil {
 		return false, err
 	}
@@ -1245,7 +1297,7 @@ func (x *Entity) DBSubquerySelectAllWhereAll(fieldsToMatch []string, subquery st
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSubquerySelectAllWhereAllContext(ctx context.Context, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
@@ -1261,7 +1313,7 @@ func (x *Entity) DBSubquerySelectAllWhereAllContext(ctx context.Context, fieldsT
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSubquerySelectAllWhereAny(fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
@@ -1277,7 +1329,7 @@ func (x *Entity) DBSubquerySelectAllWhereAny(fieldsToMatch []string, subquery st
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSubquerySelectAllWhereAnyContext(ctx context.Context, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
@@ -1293,5 +1345,5 @@ func (x *Entity) DBSubquerySelectAllWhereAnyContext(ctx context.Context, fieldsT
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }

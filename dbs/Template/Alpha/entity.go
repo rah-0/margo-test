@@ -154,25 +154,40 @@ func getPreparedStmt(query string) (*sql.Stmt, error) {
 	return stmt, nil
 }
 
-func scanRow(rows *sql.Rows) (*Entity, error) {
+func scanRow(fields []string, rows *sql.Rows) (*Entity, error) {
 	x := &Entity{}
-	var ptrUuid *string
-	var ptrFirstInsert *string
-	var ptrLastUpdate *string
-	var ptrAnimal *string
-	var ptrBigNumber *string
-	var ptrTestField *string
-	err := rows.Scan(
-		&ptrUuid,
-		&ptrFirstInsert,
-		&ptrLastUpdate,
-		&ptrAnimal,
-		&ptrBigNumber,
-		&ptrTestField,
+	var (
+		ptrUuid        *string
+		ptrFirstInsert *string
+		ptrLastUpdate  *string
+		ptrAnimal      *string
+		ptrBigNumber   *string
+		ptrTestField   *string
+		scanTargets    []any
 	)
+
+	for _, field := range fields {
+		switch field {
+		case FieldUuid:
+			scanTargets = append(scanTargets, &ptrUuid)
+		case FieldFirstInsert:
+			scanTargets = append(scanTargets, &ptrFirstInsert)
+		case FieldLastUpdate:
+			scanTargets = append(scanTargets, &ptrLastUpdate)
+		case FieldAnimal:
+			scanTargets = append(scanTargets, &ptrAnimal)
+		case FieldBigNumber:
+			scanTargets = append(scanTargets, &ptrBigNumber)
+		case FieldTestField:
+			scanTargets = append(scanTargets, &ptrTestField)
+		}
+	}
+
+	err := rows.Scan(scanTargets...)
 	if err != nil {
 		return nil, err
 	}
+
 	if ptrUuid != nil {
 		x.Uuid = *ptrUuid
 	} else {
@@ -206,11 +221,11 @@ func scanRow(rows *sql.Rows) (*Entity, error) {
 	return x, nil
 }
 
-func readRows(rows *sql.Rows) ([]*Entity, error) {
+func readRows(fields []string, rows *sql.Rows) ([]*Entity, error) {
 	defer rows.Close()
 	var results []*Entity
 	for rows.Next() {
-		x, err := scanRow(rows)
+		x, err := scanRow(fields, rows)
 		if err != nil {
 			return results, err
 		}
@@ -342,7 +357,7 @@ func DBSelectAll() ([]*Entity, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func DBSelectAllContext(ctx context.Context) ([]*Entity, error) {
@@ -356,7 +371,7 @@ func DBSelectAllContext(ctx context.Context) ([]*Entity, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func DBSelectAllWithFields(fields []string) ([]*Entity, error) {
@@ -370,7 +385,7 @@ func DBSelectAllWithFields(fields []string) ([]*Entity, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(fields, rows)
 }
 
 func DBSelectAllWithFieldsContext(ctx context.Context, fields []string) ([]*Entity, error) {
@@ -384,7 +399,7 @@ func DBSelectAllWithFieldsContext(ctx context.Context, fields []string) ([]*Enti
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(fields, rows)
 }
 
 func DBSubquerySelectAll(subquery string, args ...any) ([]*Entity, error) {
@@ -398,7 +413,7 @@ func DBSubquerySelectAll(subquery string, args ...any) ([]*Entity, error) {
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func DBSubquerySelectAllContext(ctx context.Context, subquery string, args ...any) ([]*Entity, error) {
@@ -412,7 +427,7 @@ func DBSubquerySelectAllContext(ctx context.Context, subquery string, args ...an
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSelectAllWhereAll(fieldsToMatch []string) ([]*Entity, error) {
@@ -427,7 +442,7 @@ func (x *Entity) DBSelectAllWhereAll(fieldsToMatch []string) ([]*Entity, error) 
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSelectAllWhereAllContext(ctx context.Context, fieldsToMatch []string) ([]*Entity, error) {
@@ -442,7 +457,7 @@ func (x *Entity) DBSelectAllWhereAllContext(ctx context.Context, fieldsToMatch [
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSelectAllWhereAny(fieldsToMatch []string) ([]*Entity, error) {
@@ -457,7 +472,7 @@ func (x *Entity) DBSelectAllWhereAny(fieldsToMatch []string) ([]*Entity, error) 
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSelectAllWhereAnyContext(ctx context.Context, fieldsToMatch []string) ([]*Entity, error) {
@@ -472,7 +487,7 @@ func (x *Entity) DBSelectAllWhereAnyContext(ctx context.Context, fieldsToMatch [
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBExists(fields []string) (bool, error) {
@@ -487,7 +502,7 @@ func (x *Entity) DBExists(fields []string) (bool, error) {
 		return false, err
 	}
 	defer rows.Close()
-	results, err := readRows(rows)
+	results, err := readRows(Fields, rows)
 	if err != nil {
 		return false, err
 	}
@@ -510,7 +525,7 @@ func (x *Entity) DBExistsContext(ctx context.Context, fields []string) (bool, er
 		return false, err
 	}
 	defer rows.Close()
-	results, err := readRows(rows)
+	results, err := readRows(Fields, rows)
 	if err != nil {
 		return false, err
 	}
@@ -616,7 +631,7 @@ func (x *Entity) DBSubquerySelectAllWhereAll(fieldsToMatch []string, subquery st
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSubquerySelectAllWhereAllContext(ctx context.Context, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
@@ -632,7 +647,7 @@ func (x *Entity) DBSubquerySelectAllWhereAllContext(ctx context.Context, fieldsT
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSubquerySelectAllWhereAny(fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
@@ -648,7 +663,7 @@ func (x *Entity) DBSubquerySelectAllWhereAny(fieldsToMatch []string, subquery st
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }
 
 func (x *Entity) DBSubquerySelectAllWhereAnyContext(ctx context.Context, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
@@ -664,5 +679,5 @@ func (x *Entity) DBSubquerySelectAllWhereAnyContext(ctx context.Context, fieldsT
 		return nil, err
 	}
 	defer rows.Close()
-	return readRows(rows)
+	return readRows(Fields, rows)
 }

@@ -309,198 +309,204 @@ func GetFieldPlaceholders(fieldList []string) []string {
 	return placeholders
 }
 
-func GetFieldPlaceholdersWithName(fieldList []string) []string {
-	placeholders := make([]string, 0, len(fieldList))
-
-	for _, field := range fieldList {
-		switch field {
-		case FieldId:
-			placeholders = append(placeholders, "`"+FieldId+"` = ?")
-		case FieldTinySigned:
-			placeholders = append(placeholders, "`"+FieldTinySigned+"` = ?")
-		case FieldTinyUnsigned:
-			placeholders = append(placeholders, "`"+FieldTinyUnsigned+"` = ?")
-		case FieldSmallSigned:
-			placeholders = append(placeholders, "`"+FieldSmallSigned+"` = ?")
-		case FieldSmallUnsigned:
-			placeholders = append(placeholders, "`"+FieldSmallUnsigned+"` = ?")
-		case FieldMediumSigned:
-			placeholders = append(placeholders, "`"+FieldMediumSigned+"` = ?")
-		case FieldMediumUnsigned:
-			placeholders = append(placeholders, "`"+FieldMediumUnsigned+"` = ?")
-		case FieldIntSigned:
-			placeholders = append(placeholders, "`"+FieldIntSigned+"` = ?")
-		case FieldIntUnsigned:
-			placeholders = append(placeholders, "`"+FieldIntUnsigned+"` = ?")
-		case FieldBigSigned:
-			placeholders = append(placeholders, "`"+FieldBigSigned+"` = ?")
-		case FieldBigUnsigned:
-			placeholders = append(placeholders, "`"+FieldBigUnsigned+"` = ?")
-		case FieldFloatField:
-			placeholders = append(placeholders, "`"+FieldFloatField+"` = ?")
-		case FieldDoubleField:
-			placeholders = append(placeholders, "`"+FieldDoubleField+"` = ?")
-		case FieldRealField:
-			placeholders = append(placeholders, "`"+FieldRealField+"` = ?")
-		case FieldDecimalField:
-			placeholders = append(placeholders, "`"+FieldDecimalField+"` = ?")
-		case FieldDecField:
-			placeholders = append(placeholders, "`"+FieldDecField+"` = ?")
-		case FieldNumericField:
-			placeholders = append(placeholders, "`"+FieldNumericField+"` = ?")
-		case FieldFixedField:
-			placeholders = append(placeholders, "`"+FieldFixedField+"` = ?")
-		case FieldBit1:
-			placeholders = append(placeholders, "`"+FieldBit1+"` = ?")
-		case FieldBit8:
-			placeholders = append(placeholders, "`"+FieldBit8+"` = ?")
-		case FieldBit64:
-			placeholders = append(placeholders, "`"+FieldBit64+"` = ?")
-		case FieldBoolField:
-			placeholders = append(placeholders, "`"+FieldBoolField+"` = ?")
-		case FieldBooleanField:
-			placeholders = append(placeholders, "`"+FieldBooleanField+"` = ?")
-		case FieldCharField:
-			placeholders = append(placeholders, "`"+FieldCharField+"` = ?")
-		case FieldVarcharField:
-			placeholders = append(placeholders, "`"+FieldVarcharField+"` = ?")
-		case FieldTextField:
-			placeholders = append(placeholders, "`"+FieldTextField+"` = ?")
-		case FieldTinytextField:
-			placeholders = append(placeholders, "`"+FieldTinytextField+"` = ?")
-		case FieldMediumtextField:
-			placeholders = append(placeholders, "`"+FieldMediumtextField+"` = ?")
-		case FieldLongtextField:
-			placeholders = append(placeholders, "`"+FieldLongtextField+"` = ?")
-		case FieldEnumField:
-			placeholders = append(placeholders, "`"+FieldEnumField+"` = ?")
-		case FieldSetField:
-			placeholders = append(placeholders, "`"+FieldSetField+"` = ?")
-		case FieldBinaryField:
-			placeholders = append(placeholders, "`"+FieldBinaryField+"` = ?")
-		case FieldVarbinaryField:
-			placeholders = append(placeholders, "`"+FieldVarbinaryField+"` = ?")
-		case FieldBlobField:
-			placeholders = append(placeholders, "`"+FieldBlobField+"` = ?")
-		case FieldTinyblobField:
-			placeholders = append(placeholders, "`"+FieldTinyblobField+"` = ?")
-		case FieldMediumblobField:
-			placeholders = append(placeholders, "`"+FieldMediumblobField+"` = ?")
-		case FieldLongblobField:
-			placeholders = append(placeholders, "`"+FieldLongblobField+"` = ?")
-		case FieldDateField:
-			placeholders = append(placeholders, "`"+FieldDateField+"` = ?")
-		case FieldTimeField:
-			placeholders = append(placeholders, "`"+FieldTimeField+"` = ?")
-		case FieldYearField:
-			placeholders = append(placeholders, "`"+FieldYearField+"` = ?")
-		case FieldDatetimeField:
-			placeholders = append(placeholders, "`"+FieldDatetimeField+"` = ?")
-		case FieldTimestampField:
-			placeholders = append(placeholders, "`"+FieldTimestampField+"` = ?")
-		case FieldUuidField:
-			placeholders = append(placeholders, "`"+FieldUuidField+"` = ?")
-		}
+func GetBacktickedField(field string) string {
+	switch field {
+	case FieldId:
+		return FQTN + ".`" + FieldId + "`"
+	case FieldTinySigned:
+		return FQTN + ".`" + FieldTinySigned + "`"
+	case FieldTinyUnsigned:
+		return FQTN + ".`" + FieldTinyUnsigned + "`"
+	case FieldSmallSigned:
+		return FQTN + ".`" + FieldSmallSigned + "`"
+	case FieldSmallUnsigned:
+		return FQTN + ".`" + FieldSmallUnsigned + "`"
+	case FieldMediumSigned:
+		return FQTN + ".`" + FieldMediumSigned + "`"
+	case FieldMediumUnsigned:
+		return FQTN + ".`" + FieldMediumUnsigned + "`"
+	case FieldIntSigned:
+		return FQTN + ".`" + FieldIntSigned + "`"
+	case FieldIntUnsigned:
+		return FQTN + ".`" + FieldIntUnsigned + "`"
+	case FieldBigSigned:
+		return FQTN + ".`" + FieldBigSigned + "`"
+	case FieldBigUnsigned:
+		return FQTN + ".`" + FieldBigUnsigned + "`"
+	case FieldFloatField:
+		return FQTN + ".`" + FieldFloatField + "`"
+	case FieldDoubleField:
+		return FQTN + ".`" + FieldDoubleField + "`"
+	case FieldRealField:
+		return FQTN + ".`" + FieldRealField + "`"
+	case FieldDecimalField:
+		return FQTN + ".`" + FieldDecimalField + "`"
+	case FieldDecField:
+		return FQTN + ".`" + FieldDecField + "`"
+	case FieldNumericField:
+		return FQTN + ".`" + FieldNumericField + "`"
+	case FieldFixedField:
+		return FQTN + ".`" + FieldFixedField + "`"
+	case FieldBit1:
+		return FQTN + ".`" + FieldBit1 + "`"
+	case FieldBit8:
+		return FQTN + ".`" + FieldBit8 + "`"
+	case FieldBit64:
+		return FQTN + ".`" + FieldBit64 + "`"
+	case FieldBoolField:
+		return FQTN + ".`" + FieldBoolField + "`"
+	case FieldBooleanField:
+		return FQTN + ".`" + FieldBooleanField + "`"
+	case FieldCharField:
+		return FQTN + ".`" + FieldCharField + "`"
+	case FieldVarcharField:
+		return FQTN + ".`" + FieldVarcharField + "`"
+	case FieldTextField:
+		return FQTN + ".`" + FieldTextField + "`"
+	case FieldTinytextField:
+		return FQTN + ".`" + FieldTinytextField + "`"
+	case FieldMediumtextField:
+		return FQTN + ".`" + FieldMediumtextField + "`"
+	case FieldLongtextField:
+		return FQTN + ".`" + FieldLongtextField + "`"
+	case FieldEnumField:
+		return FQTN + ".`" + FieldEnumField + "`"
+	case FieldSetField:
+		return FQTN + ".`" + FieldSetField + "`"
+	case FieldBinaryField:
+		return FQTN + ".`" + FieldBinaryField + "`"
+	case FieldVarbinaryField:
+		return FQTN + ".`" + FieldVarbinaryField + "`"
+	case FieldBlobField:
+		return FQTN + ".`" + FieldBlobField + "`"
+	case FieldTinyblobField:
+		return FQTN + ".`" + FieldTinyblobField + "`"
+	case FieldMediumblobField:
+		return FQTN + ".`" + FieldMediumblobField + "`"
+	case FieldLongblobField:
+		return FQTN + ".`" + FieldLongblobField + "`"
+	case FieldDateField:
+		return FQTN + ".`" + FieldDateField + "`"
+	case FieldTimeField:
+		return FQTN + ".`" + FieldTimeField + "`"
+	case FieldYearField:
+		return FQTN + ".`" + FieldYearField + "`"
+	case FieldDatetimeField:
+		return FQTN + ".`" + FieldDatetimeField + "`"
+	case FieldTimestampField:
+		return FQTN + ".`" + FieldTimestampField + "`"
+	case FieldUuidField:
+		return FQTN + ".`" + FieldUuidField + "`"
 	}
-
-	return placeholders
+	return ""
 }
 
 func GetBacktickedFields(fieldList []string) []string {
 	fields := make([]string, 0, len(fieldList))
-
 	for _, field := range fieldList {
-		switch field {
-		case FieldId:
-			fields = append(fields, "`"+FieldId+"`")
-		case FieldTinySigned:
-			fields = append(fields, "`"+FieldTinySigned+"`")
-		case FieldTinyUnsigned:
-			fields = append(fields, "`"+FieldTinyUnsigned+"`")
-		case FieldSmallSigned:
-			fields = append(fields, "`"+FieldSmallSigned+"`")
-		case FieldSmallUnsigned:
-			fields = append(fields, "`"+FieldSmallUnsigned+"`")
-		case FieldMediumSigned:
-			fields = append(fields, "`"+FieldMediumSigned+"`")
-		case FieldMediumUnsigned:
-			fields = append(fields, "`"+FieldMediumUnsigned+"`")
-		case FieldIntSigned:
-			fields = append(fields, "`"+FieldIntSigned+"`")
-		case FieldIntUnsigned:
-			fields = append(fields, "`"+FieldIntUnsigned+"`")
-		case FieldBigSigned:
-			fields = append(fields, "`"+FieldBigSigned+"`")
-		case FieldBigUnsigned:
-			fields = append(fields, "`"+FieldBigUnsigned+"`")
-		case FieldFloatField:
-			fields = append(fields, "`"+FieldFloatField+"`")
-		case FieldDoubleField:
-			fields = append(fields, "`"+FieldDoubleField+"`")
-		case FieldRealField:
-			fields = append(fields, "`"+FieldRealField+"`")
-		case FieldDecimalField:
-			fields = append(fields, "`"+FieldDecimalField+"`")
-		case FieldDecField:
-			fields = append(fields, "`"+FieldDecField+"`")
-		case FieldNumericField:
-			fields = append(fields, "`"+FieldNumericField+"`")
-		case FieldFixedField:
-			fields = append(fields, "`"+FieldFixedField+"`")
-		case FieldBit1:
-			fields = append(fields, "`"+FieldBit1+"`")
-		case FieldBit8:
-			fields = append(fields, "`"+FieldBit8+"`")
-		case FieldBit64:
-			fields = append(fields, "`"+FieldBit64+"`")
-		case FieldBoolField:
-			fields = append(fields, "`"+FieldBoolField+"`")
-		case FieldBooleanField:
-			fields = append(fields, "`"+FieldBooleanField+"`")
-		case FieldCharField:
-			fields = append(fields, "`"+FieldCharField+"`")
-		case FieldVarcharField:
-			fields = append(fields, "`"+FieldVarcharField+"`")
-		case FieldTextField:
-			fields = append(fields, "`"+FieldTextField+"`")
-		case FieldTinytextField:
-			fields = append(fields, "`"+FieldTinytextField+"`")
-		case FieldMediumtextField:
-			fields = append(fields, "`"+FieldMediumtextField+"`")
-		case FieldLongtextField:
-			fields = append(fields, "`"+FieldLongtextField+"`")
-		case FieldEnumField:
-			fields = append(fields, "`"+FieldEnumField+"`")
-		case FieldSetField:
-			fields = append(fields, "`"+FieldSetField+"`")
-		case FieldBinaryField:
-			fields = append(fields, "`"+FieldBinaryField+"`")
-		case FieldVarbinaryField:
-			fields = append(fields, "`"+FieldVarbinaryField+"`")
-		case FieldBlobField:
-			fields = append(fields, "`"+FieldBlobField+"`")
-		case FieldTinyblobField:
-			fields = append(fields, "`"+FieldTinyblobField+"`")
-		case FieldMediumblobField:
-			fields = append(fields, "`"+FieldMediumblobField+"`")
-		case FieldLongblobField:
-			fields = append(fields, "`"+FieldLongblobField+"`")
-		case FieldDateField:
-			fields = append(fields, "`"+FieldDateField+"`")
-		case FieldTimeField:
-			fields = append(fields, "`"+FieldTimeField+"`")
-		case FieldYearField:
-			fields = append(fields, "`"+FieldYearField+"`")
-		case FieldDatetimeField:
-			fields = append(fields, "`"+FieldDatetimeField+"`")
-		case FieldTimestampField:
-			fields = append(fields, "`"+FieldTimestampField+"`")
-		case FieldUuidField:
-			fields = append(fields, "`"+FieldUuidField+"`")
-		}
+		fields = append(fields, GetBacktickedField(field))
 	}
-
 	return fields
+}
+
+func GetFieldPlaceholder(field string) string {
+	switch field {
+	case FieldId:
+		return FQTN + ".`" + FieldId + "` = ?"
+	case FieldTinySigned:
+		return FQTN + ".`" + FieldTinySigned + "` = ?"
+	case FieldTinyUnsigned:
+		return FQTN + ".`" + FieldTinyUnsigned + "` = ?"
+	case FieldSmallSigned:
+		return FQTN + ".`" + FieldSmallSigned + "` = ?"
+	case FieldSmallUnsigned:
+		return FQTN + ".`" + FieldSmallUnsigned + "` = ?"
+	case FieldMediumSigned:
+		return FQTN + ".`" + FieldMediumSigned + "` = ?"
+	case FieldMediumUnsigned:
+		return FQTN + ".`" + FieldMediumUnsigned + "` = ?"
+	case FieldIntSigned:
+		return FQTN + ".`" + FieldIntSigned + "` = ?"
+	case FieldIntUnsigned:
+		return FQTN + ".`" + FieldIntUnsigned + "` = ?"
+	case FieldBigSigned:
+		return FQTN + ".`" + FieldBigSigned + "` = ?"
+	case FieldBigUnsigned:
+		return FQTN + ".`" + FieldBigUnsigned + "` = ?"
+	case FieldFloatField:
+		return FQTN + ".`" + FieldFloatField + "` = ?"
+	case FieldDoubleField:
+		return FQTN + ".`" + FieldDoubleField + "` = ?"
+	case FieldRealField:
+		return FQTN + ".`" + FieldRealField + "` = ?"
+	case FieldDecimalField:
+		return FQTN + ".`" + FieldDecimalField + "` = ?"
+	case FieldDecField:
+		return FQTN + ".`" + FieldDecField + "` = ?"
+	case FieldNumericField:
+		return FQTN + ".`" + FieldNumericField + "` = ?"
+	case FieldFixedField:
+		return FQTN + ".`" + FieldFixedField + "` = ?"
+	case FieldBit1:
+		return FQTN + ".`" + FieldBit1 + "` = ?"
+	case FieldBit8:
+		return FQTN + ".`" + FieldBit8 + "` = ?"
+	case FieldBit64:
+		return FQTN + ".`" + FieldBit64 + "` = ?"
+	case FieldBoolField:
+		return FQTN + ".`" + FieldBoolField + "` = ?"
+	case FieldBooleanField:
+		return FQTN + ".`" + FieldBooleanField + "` = ?"
+	case FieldCharField:
+		return FQTN + ".`" + FieldCharField + "` = ?"
+	case FieldVarcharField:
+		return FQTN + ".`" + FieldVarcharField + "` = ?"
+	case FieldTextField:
+		return FQTN + ".`" + FieldTextField + "` = ?"
+	case FieldTinytextField:
+		return FQTN + ".`" + FieldTinytextField + "` = ?"
+	case FieldMediumtextField:
+		return FQTN + ".`" + FieldMediumtextField + "` = ?"
+	case FieldLongtextField:
+		return FQTN + ".`" + FieldLongtextField + "` = ?"
+	case FieldEnumField:
+		return FQTN + ".`" + FieldEnumField + "` = ?"
+	case FieldSetField:
+		return FQTN + ".`" + FieldSetField + "` = ?"
+	case FieldBinaryField:
+		return FQTN + ".`" + FieldBinaryField + "` = ?"
+	case FieldVarbinaryField:
+		return FQTN + ".`" + FieldVarbinaryField + "` = ?"
+	case FieldBlobField:
+		return FQTN + ".`" + FieldBlobField + "` = ?"
+	case FieldTinyblobField:
+		return FQTN + ".`" + FieldTinyblobField + "` = ?"
+	case FieldMediumblobField:
+		return FQTN + ".`" + FieldMediumblobField + "` = ?"
+	case FieldLongblobField:
+		return FQTN + ".`" + FieldLongblobField + "` = ?"
+	case FieldDateField:
+		return FQTN + ".`" + FieldDateField + "` = ?"
+	case FieldTimeField:
+		return FQTN + ".`" + FieldTimeField + "` = ?"
+	case FieldYearField:
+		return FQTN + ".`" + FieldYearField + "` = ?"
+	case FieldDatetimeField:
+		return FQTN + ".`" + FieldDatetimeField + "` = ?"
+	case FieldTimestampField:
+		return FQTN + ".`" + FieldTimestampField + "` = ?"
+	case FieldUuidField:
+		return FQTN + ".`" + FieldUuidField + "` = ?"
+	}
+	return ""
+}
+
+func GetFieldPlaceholdersWithName(fieldList []string) []string {
+	placeholders := make([]string, 0, len(fieldList))
+	for _, field := range fieldList {
+		placeholders = append(placeholders, GetFieldPlaceholder(field))
+	}
+	return placeholders
 }
 
 func getPreparedStmt(query string) (*sql.Stmt, error) {

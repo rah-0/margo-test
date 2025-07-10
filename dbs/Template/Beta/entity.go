@@ -75,42 +75,48 @@ func GetFieldPlaceholders(fieldList []string) []string {
 	return placeholders
 }
 
-func GetFieldPlaceholdersWithName(fieldList []string) []string {
-	placeholders := make([]string, 0, len(fieldList))
-
-	for _, field := range fieldList {
-		switch field {
-		case FieldFirstInsert:
-			placeholders = append(placeholders, "`"+FieldFirstInsert+"` = ?")
-		case FieldLastUpdate:
-			placeholders = append(placeholders, "`"+FieldLastUpdate+"` = ?")
-		case FieldUuid:
-			placeholders = append(placeholders, "`"+FieldUuid+"` = ?")
-		case FieldName:
-			placeholders = append(placeholders, "`"+FieldName+"` = ?")
-		}
+func GetBacktickedField(field string) string {
+	switch field {
+	case FieldFirstInsert:
+		return FQTN + ".`" + FieldFirstInsert + "`"
+	case FieldLastUpdate:
+		return FQTN + ".`" + FieldLastUpdate + "`"
+	case FieldUuid:
+		return FQTN + ".`" + FieldUuid + "`"
+	case FieldName:
+		return FQTN + ".`" + FieldName + "`"
 	}
-
-	return placeholders
+	return ""
 }
 
 func GetBacktickedFields(fieldList []string) []string {
 	fields := make([]string, 0, len(fieldList))
-
 	for _, field := range fieldList {
-		switch field {
-		case FieldFirstInsert:
-			fields = append(fields, "`"+FieldFirstInsert+"`")
-		case FieldLastUpdate:
-			fields = append(fields, "`"+FieldLastUpdate+"`")
-		case FieldUuid:
-			fields = append(fields, "`"+FieldUuid+"`")
-		case FieldName:
-			fields = append(fields, "`"+FieldName+"`")
-		}
+		fields = append(fields, GetBacktickedField(field))
 	}
-
 	return fields
+}
+
+func GetFieldPlaceholder(field string) string {
+	switch field {
+	case FieldFirstInsert:
+		return FQTN + ".`" + FieldFirstInsert + "` = ?"
+	case FieldLastUpdate:
+		return FQTN + ".`" + FieldLastUpdate + "` = ?"
+	case FieldUuid:
+		return FQTN + ".`" + FieldUuid + "` = ?"
+	case FieldName:
+		return FQTN + ".`" + FieldName + "` = ?"
+	}
+	return ""
+}
+
+func GetFieldPlaceholdersWithName(fieldList []string) []string {
+	placeholders := make([]string, 0, len(fieldList))
+	for _, field := range fieldList {
+		placeholders = append(placeholders, GetFieldPlaceholder(field))
+	}
+	return placeholders
 }
 
 func getPreparedStmt(query string) (*sql.Stmt, error) {

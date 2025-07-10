@@ -87,50 +87,56 @@ func GetFieldPlaceholders(fieldList []string) []string {
 	return placeholders
 }
 
-func GetFieldPlaceholdersWithName(fieldList []string) []string {
-	placeholders := make([]string, 0, len(fieldList))
-
-	for _, field := range fieldList {
-		switch field {
-		case FieldUuid:
-			placeholders = append(placeholders, "`"+FieldUuid+"` = ?")
-		case FieldFirstInsert:
-			placeholders = append(placeholders, "`"+FieldFirstInsert+"` = ?")
-		case FieldLastUpdate:
-			placeholders = append(placeholders, "`"+FieldLastUpdate+"` = ?")
-		case FieldAnimal:
-			placeholders = append(placeholders, "`"+FieldAnimal+"` = ?")
-		case FieldBigNumber:
-			placeholders = append(placeholders, "`"+FieldBigNumber+"` = ?")
-		case FieldTestField:
-			placeholders = append(placeholders, "`"+FieldTestField+"` = ?")
-		}
+func GetBacktickedField(field string) string {
+	switch field {
+	case FieldUuid:
+		return FQTN + ".`" + FieldUuid + "`"
+	case FieldFirstInsert:
+		return FQTN + ".`" + FieldFirstInsert + "`"
+	case FieldLastUpdate:
+		return FQTN + ".`" + FieldLastUpdate + "`"
+	case FieldAnimal:
+		return FQTN + ".`" + FieldAnimal + "`"
+	case FieldBigNumber:
+		return FQTN + ".`" + FieldBigNumber + "`"
+	case FieldTestField:
+		return FQTN + ".`" + FieldTestField + "`"
 	}
-
-	return placeholders
+	return ""
 }
 
 func GetBacktickedFields(fieldList []string) []string {
 	fields := make([]string, 0, len(fieldList))
-
 	for _, field := range fieldList {
-		switch field {
-		case FieldUuid:
-			fields = append(fields, "`"+FieldUuid+"`")
-		case FieldFirstInsert:
-			fields = append(fields, "`"+FieldFirstInsert+"`")
-		case FieldLastUpdate:
-			fields = append(fields, "`"+FieldLastUpdate+"`")
-		case FieldAnimal:
-			fields = append(fields, "`"+FieldAnimal+"`")
-		case FieldBigNumber:
-			fields = append(fields, "`"+FieldBigNumber+"`")
-		case FieldTestField:
-			fields = append(fields, "`"+FieldTestField+"`")
-		}
+		fields = append(fields, GetBacktickedField(field))
 	}
-
 	return fields
+}
+
+func GetFieldPlaceholder(field string) string {
+	switch field {
+	case FieldUuid:
+		return FQTN + ".`" + FieldUuid + "` = ?"
+	case FieldFirstInsert:
+		return FQTN + ".`" + FieldFirstInsert + "` = ?"
+	case FieldLastUpdate:
+		return FQTN + ".`" + FieldLastUpdate + "` = ?"
+	case FieldAnimal:
+		return FQTN + ".`" + FieldAnimal + "` = ?"
+	case FieldBigNumber:
+		return FQTN + ".`" + FieldBigNumber + "` = ?"
+	case FieldTestField:
+		return FQTN + ".`" + FieldTestField + "` = ?"
+	}
+	return ""
+}
+
+func GetFieldPlaceholdersWithName(fieldList []string) []string {
+	placeholders := make([]string, 0, len(fieldList))
+	for _, field := range fieldList {
+		placeholders = append(placeholders, GetFieldPlaceholder(field))
+	}
+	return placeholders
 }
 
 func getPreparedStmt(query string) (*sql.Stmt, error) {

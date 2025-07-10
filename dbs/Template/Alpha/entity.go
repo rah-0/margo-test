@@ -41,53 +41,59 @@ func SetDB(x *sql.DB) {
 	db = x
 }
 
-func (x *Entity) GetFieldValues(fieldList []string) []any {
-	values := make([]any, 0, len(fieldList))
-
-	for _, field := range fieldList {
-		switch field {
-		case FieldUuid:
-			values = append(values, x.Uuid)
-		case FieldFirstInsert:
-			values = append(values, x.FirstInsert)
-		case FieldLastUpdate:
-			values = append(values, x.LastUpdate)
-		case FieldAnimal:
-			values = append(values, x.Animal)
-		case FieldBigNumber:
-			values = append(values, x.BigNumber)
-		case FieldTestField:
-			values = append(values, x.TestField)
-		}
+func (x *Entity) GetFieldValue(field string) any {
+	switch field {
+	case FieldUuid:
+		return x.Uuid
+	case FieldFirstInsert:
+		return x.FirstInsert
+	case FieldLastUpdate:
+		return x.LastUpdate
+	case FieldAnimal:
+		return x.Animal
+	case FieldBigNumber:
+		return x.BigNumber
+	case FieldTestField:
+		return x.TestField
 	}
+	return nil
+}
 
+func (x *Entity) GetFieldsValues(fieldList []string) []any {
+	values := make([]any, 0, len(fieldList))
+	for _, field := range fieldList {
+		values = append(values, x.GetFieldValue(field))
+	}
 	return values
 }
 
-func GetFieldPlaceholders(fieldList []string) []string {
-	placeholders := make([]string, 0, len(fieldList))
-
-	for _, field := range fieldList {
-		switch field {
-		case FieldUuid:
-			placeholders = append(placeholders, "?")
-		case FieldFirstInsert:
-			placeholders = append(placeholders, "?")
-		case FieldLastUpdate:
-			placeholders = append(placeholders, "?")
-		case FieldAnimal:
-			placeholders = append(placeholders, "?")
-		case FieldBigNumber:
-			placeholders = append(placeholders, "?")
-		case FieldTestField:
-			placeholders = append(placeholders, "?")
-		}
+func GetValuePlaceholder(field string) string {
+	switch field {
+	case FieldUuid:
+		return "?"
+	case FieldFirstInsert:
+		return "?"
+	case FieldLastUpdate:
+		return "?"
+	case FieldAnimal:
+		return "?"
+	case FieldBigNumber:
+		return "?"
+	case FieldTestField:
+		return "?"
 	}
+	return ""
+}
 
+func GetValuesPlaceholders(fieldList []string) []string {
+	placeholders := make([]string, 0, len(fieldList))
+	for _, field := range fieldList {
+		placeholders = append(placeholders, GetValuePlaceholder(field))
+	}
 	return placeholders
 }
 
-func GetBacktickedField(field string) string {
+func GetQualifiedField(field string) string {
 	switch field {
 	case FieldUuid:
 		return FQTN + ".`" + FieldUuid + "`"
@@ -105,15 +111,15 @@ func GetBacktickedField(field string) string {
 	return ""
 }
 
-func GetBacktickedFields(fieldList []string) []string {
+func GetQualifiedFields(fieldList []string) []string {
 	fields := make([]string, 0, len(fieldList))
 	for _, field := range fieldList {
-		fields = append(fields, GetBacktickedField(field))
+		fields = append(fields, GetQualifiedField(field))
 	}
 	return fields
 }
 
-func GetFieldPlaceholder(field string) string {
+func GetQualifiedPlaceholder(field string) string {
 	switch field {
 	case FieldUuid:
 		return FQTN + ".`" + FieldUuid + "` = ?"
@@ -131,10 +137,10 @@ func GetFieldPlaceholder(field string) string {
 	return ""
 }
 
-func GetFieldPlaceholdersWithName(fieldList []string) []string {
+func GetQualifiedPlaceholders(fieldList []string) []string {
 	placeholders := make([]string, 0, len(fieldList))
 	for _, field := range fieldList {
-		placeholders = append(placeholders, GetFieldPlaceholder(field))
+		placeholders = append(placeholders, GetQualifiedPlaceholder(field))
 	}
 	return placeholders
 }
@@ -259,101 +265,101 @@ func DBTruncateContext(ctx context.Context) (sql.Result, error) {
 }
 
 func (x *Entity) DBInsert(fieldsToInsert []string) (sql.Result, error) {
-	query := "INSERT INTO " + FQTN + " (" + strings.Join(GetBacktickedFields(fieldsToInsert), ", ") + ") VALUES (" + strings.Join(GetFieldPlaceholders(fieldsToInsert), ", ") + ")"
+	query := "INSERT INTO " + FQTN + " (" + strings.Join(GetQualifiedFields(fieldsToInsert), ", ") + ") VALUES (" + strings.Join(GetValuesPlaceholders(fieldsToInsert), ", ") + ")"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	return stmt.Exec(x.GetFieldValues(fieldsToInsert)...)
+	return stmt.Exec(x.GetFieldsValues(fieldsToInsert)...)
 }
 
 func (x *Entity) DBInsertContext(ctx context.Context, fieldsToInsert []string) (sql.Result, error) {
-	query := "INSERT INTO " + FQTN + " (" + strings.Join(GetBacktickedFields(fieldsToInsert), ", ") + ") VALUES (" + strings.Join(GetFieldPlaceholders(fieldsToInsert), ", ") + ")"
+	query := "INSERT INTO " + FQTN + " (" + strings.Join(GetQualifiedFields(fieldsToInsert), ", ") + ") VALUES (" + strings.Join(GetValuesPlaceholders(fieldsToInsert), ", ") + ")"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	return stmt.ExecContext(ctx, x.GetFieldValues(fieldsToInsert)...)
+	return stmt.ExecContext(ctx, x.GetFieldsValues(fieldsToInsert)...)
 }
 
 func (x *Entity) DBDeleteWhereAll(fieldsToMatch []string) (sql.Result, error) {
-	query := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	query := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	return stmt.Exec(x.GetFieldValues(fieldsToMatch)...)
+	return stmt.Exec(x.GetFieldsValues(fieldsToMatch)...)
 }
 
 func (x *Entity) DBDeleteWhereAllContext(ctx context.Context, fieldsToMatch []string) (sql.Result, error) {
-	query := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	query := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	return stmt.ExecContext(ctx, x.GetFieldValues(fieldsToMatch)...)
+	return stmt.ExecContext(ctx, x.GetFieldsValues(fieldsToMatch)...)
 }
 
 func (x *Entity) DBDeleteWhereAny(fieldsToMatch []string) (sql.Result, error) {
-	query := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	query := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	return stmt.Exec(x.GetFieldValues(fieldsToMatch)...)
+	return stmt.Exec(x.GetFieldsValues(fieldsToMatch)...)
 }
 
 func (x *Entity) DBDeleteWhereAnyContext(ctx context.Context, fieldsToMatch []string) (sql.Result, error) {
-	query := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	query := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	return stmt.ExecContext(ctx, x.GetFieldValues(fieldsToMatch)...)
+	return stmt.ExecContext(ctx, x.GetFieldsValues(fieldsToMatch)...)
 }
 
 func (x *Entity) DBUpdateWhereAll(fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
-	query := "UPDATE " + FQTN + " SET " + strings.Join(GetFieldPlaceholdersWithName(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	query := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	values := append(x.GetFieldValues(fieldsToUpdate), x.GetFieldValues(fieldsToMatch)...)
+	values := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
 	return stmt.Exec(values...)
 }
 
 func (x *Entity) DBUpdateWhereAllContext(ctx context.Context, fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
-	query := "UPDATE " + FQTN + " SET " + strings.Join(GetFieldPlaceholdersWithName(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	query := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	values := append(x.GetFieldValues(fieldsToUpdate), x.GetFieldValues(fieldsToMatch)...)
+	values := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
 	return stmt.ExecContext(ctx, values...)
 }
 
 func (x *Entity) DBUpdateWhereAny(fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
-	query := "UPDATE " + FQTN + " SET " + strings.Join(GetFieldPlaceholdersWithName(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	query := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	values := append(x.GetFieldValues(fieldsToUpdate), x.GetFieldValues(fieldsToMatch)...)
+	values := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
 	return stmt.Exec(values...)
 }
 
 func (x *Entity) DBUpdateWhereAnyContext(ctx context.Context, fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
-	query := "UPDATE " + FQTN + " SET " + strings.Join(GetFieldPlaceholdersWithName(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	query := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	values := append(x.GetFieldValues(fieldsToUpdate), x.GetFieldValues(fieldsToMatch)...)
+	values := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
 	return stmt.ExecContext(ctx, values...)
 }
 
 func DBSelectAll() ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
@@ -367,7 +373,7 @@ func DBSelectAll() ([]*Entity, error) {
 }
 
 func DBSelectAllContext(ctx context.Context) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
@@ -381,7 +387,7 @@ func DBSelectAllContext(ctx context.Context) ([]*Entity, error) {
 }
 
 func DBSelectAllWithFields(fields []string) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(fields), ", ") + " FROM " + FQTN
+	query := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
@@ -395,7 +401,7 @@ func DBSelectAllWithFields(fields []string) ([]*Entity, error) {
 }
 
 func DBSelectAllWithFieldsContext(ctx context.Context, fields []string) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(fields), ", ") + " FROM " + FQTN
+	query := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
@@ -409,7 +415,7 @@ func DBSelectAllWithFieldsContext(ctx context.Context, fields []string) ([]*Enti
 }
 
 func DBSubquerySelectAll(subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN + " " + subquery
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " " + subquery
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
@@ -423,7 +429,7 @@ func DBSubquerySelectAll(subquery string, args ...any) ([]*Entity, error) {
 }
 
 func DBSubquerySelectAllContext(ctx context.Context, subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN + " " + subquery
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " " + subquery
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
@@ -437,13 +443,13 @@ func DBSubquerySelectAllContext(ctx context.Context, subquery string, args ...an
 }
 
 func (x *Entity) DBSelectAllWhereAll(fieldsToMatch []string) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
+		" WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := stmt.Query(x.GetFieldValues(fieldsToMatch)...)
+	rows, err := stmt.Query(x.GetFieldsValues(fieldsToMatch)...)
 	if err != nil {
 		return nil, err
 	}
@@ -452,13 +458,13 @@ func (x *Entity) DBSelectAllWhereAll(fieldsToMatch []string) ([]*Entity, error) 
 }
 
 func (x *Entity) DBSelectAllWhereAllContext(ctx context.Context, fieldsToMatch []string) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
+		" WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := stmt.QueryContext(ctx, x.GetFieldValues(fieldsToMatch)...)
+	rows, err := stmt.QueryContext(ctx, x.GetFieldsValues(fieldsToMatch)...)
 	if err != nil {
 		return nil, err
 	}
@@ -467,13 +473,13 @@ func (x *Entity) DBSelectAllWhereAllContext(ctx context.Context, fieldsToMatch [
 }
 
 func (x *Entity) DBSelectAllWhereAny(fieldsToMatch []string) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
+		" WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := stmt.Query(x.GetFieldValues(fieldsToMatch)...)
+	rows, err := stmt.Query(x.GetFieldsValues(fieldsToMatch)...)
 	if err != nil {
 		return nil, err
 	}
@@ -482,13 +488,13 @@ func (x *Entity) DBSelectAllWhereAny(fieldsToMatch []string) ([]*Entity, error) 
 }
 
 func (x *Entity) DBSelectAllWhereAnyContext(ctx context.Context, fieldsToMatch []string) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE " + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
+		" WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := stmt.QueryContext(ctx, x.GetFieldValues(fieldsToMatch)...)
+	rows, err := stmt.QueryContext(ctx, x.GetFieldsValues(fieldsToMatch)...)
 	if err != nil {
 		return nil, err
 	}
@@ -497,13 +503,13 @@ func (x *Entity) DBSelectAllWhereAnyContext(ctx context.Context, fieldsToMatch [
 }
 
 func (x *Entity) DBExists(fields []string) (bool, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") +
-		" FROM " + FQTN + " WHERE " + strings.Join(GetBacktickedFields(fields), " = ? AND ") + " = ? LIMIT 1"
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") +
+		" FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ? LIMIT 1"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return false, err
 	}
-	rows, err := stmt.Query(x.GetFieldValues(fields)...)
+	rows, err := stmt.Query(x.GetFieldsValues(fields)...)
 	if err != nil {
 		return false, err
 	}
@@ -520,13 +526,13 @@ func (x *Entity) DBExists(fields []string) (bool, error) {
 }
 
 func (x *Entity) DBExistsContext(ctx context.Context, fields []string) (bool, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") +
-		" FROM " + FQTN + " WHERE " + strings.Join(GetBacktickedFields(fields), " = ? AND ") + " = ? LIMIT 1"
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") +
+		" FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ? LIMIT 1"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return false, err
 	}
-	rows, err := stmt.QueryContext(ctx, x.GetFieldValues(fields)...)
+	rows, err := stmt.QueryContext(ctx, x.GetFieldsValues(fields)...)
 	if err != nil {
 		return false, err
 	}
@@ -543,46 +549,46 @@ func (x *Entity) DBExistsContext(ctx context.Context, fields []string) (bool, er
 }
 
 func (x *Entity) DBCountWhereAll(fields []string) (int, error) {
-	query := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetBacktickedFields(fields), " = ? AND ") + " = ?"
+	query := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return 0, err
 	}
 	var count int
-	err = stmt.QueryRow(x.GetFieldValues(fields)...).Scan(&count)
+	err = stmt.QueryRow(x.GetFieldsValues(fields)...).Scan(&count)
 	return count, err
 }
 
 func (x *Entity) DBCountWhereAllContext(ctx context.Context, fields []string) (int, error) {
-	query := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetBacktickedFields(fields), " = ? AND ") + " = ?"
+	query := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return 0, err
 	}
 	var count int
-	err = stmt.QueryRowContext(ctx, x.GetFieldValues(fields)...).Scan(&count)
+	err = stmt.QueryRowContext(ctx, x.GetFieldsValues(fields)...).Scan(&count)
 	return count, err
 }
 
 func (x *Entity) DBCountWhereAny(fields []string) (int, error) {
-	query := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetBacktickedFields(fields), " = ? OR ") + " = ?"
+	query := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? OR ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return 0, err
 	}
 	var count int
-	err = stmt.QueryRow(x.GetFieldValues(fields)...).Scan(&count)
+	err = stmt.QueryRow(x.GetFieldsValues(fields)...).Scan(&count)
 	return count, err
 }
 
 func (x *Entity) DBCountWhereAnyContext(ctx context.Context, fields []string) (int, error) {
-	query := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetBacktickedFields(fields), " = ? OR ") + " = ?"
+	query := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? OR ") + " = ?"
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return 0, err
 	}
 	var count int
-	err = stmt.QueryRowContext(ctx, x.GetFieldValues(fields)...).Scan(&count)
+	err = stmt.QueryRowContext(ctx, x.GetFieldsValues(fields)...).Scan(&count)
 	return count, err
 }
 
@@ -625,13 +631,13 @@ func (x *Entity) DBFindOrCreateContext(ctx context.Context, fields []string) err
 }
 
 func (x *Entity) DBSubquerySelectAllWhereAll(fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE (" + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? AND ") + " = ?) " + subquery
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
+		" WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?) " + subquery
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	allArgs := append(x.GetFieldValues(fieldsToMatch), args...)
+	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
 	rows, err := stmt.Query(allArgs...)
 	if err != nil {
 		return nil, err
@@ -641,13 +647,13 @@ func (x *Entity) DBSubquerySelectAllWhereAll(fieldsToMatch []string, subquery st
 }
 
 func (x *Entity) DBSubquerySelectAllWhereAllContext(ctx context.Context, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE (" + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? AND ") + " = ?) " + subquery
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
+		" WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?) " + subquery
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	allArgs := append(x.GetFieldValues(fieldsToMatch), args...)
+	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
 	rows, err := stmt.QueryContext(ctx, allArgs...)
 	if err != nil {
 		return nil, err
@@ -657,13 +663,13 @@ func (x *Entity) DBSubquerySelectAllWhereAllContext(ctx context.Context, fieldsT
 }
 
 func (x *Entity) DBSubquerySelectAllWhereAny(fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE (" + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? OR ") + " = ?) " + subquery
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
+		" WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?) " + subquery
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	allArgs := append(x.GetFieldValues(fieldsToMatch), args...)
+	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
 	rows, err := stmt.Query(allArgs...)
 	if err != nil {
 		return nil, err
@@ -673,13 +679,13 @@ func (x *Entity) DBSubquerySelectAllWhereAny(fieldsToMatch []string, subquery st
 }
 
 func (x *Entity) DBSubquerySelectAllWhereAnyContext(ctx context.Context, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetBacktickedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE (" + strings.Join(GetBacktickedFields(fieldsToMatch), " = ? OR ") + " = ?) " + subquery
+	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
+		" WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?) " + subquery
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	allArgs := append(x.GetFieldValues(fieldsToMatch), args...)
+	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
 	rows, err := stmt.QueryContext(ctx, allArgs...)
 	if err != nil {
 		return nil, err

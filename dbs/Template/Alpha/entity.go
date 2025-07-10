@@ -29,12 +29,12 @@ var (
 )
 
 type Entity struct {
-	Uuid        string
-	FirstInsert string
-	LastUpdate  string
-	Animal      string
-	BigNumber   string
-	TestField   string
+	Uuid        string `json:",omitempty,omitzero"`
+	FirstInsert string `json:",omitempty,omitzero"`
+	LastUpdate  string `json:",omitempty,omitzero"`
+	Animal      string `json:",omitempty,omitzero"`
+	BigNumber   string `json:",omitempty,omitzero"`
+	TestField   string `json:",omitempty,omitzero"`
 }
 
 func SetDB(x *sql.DB) {

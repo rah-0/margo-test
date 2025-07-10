@@ -66,49 +66,49 @@ var (
 )
 
 type Entity struct {
-	Id              string
-	TinySigned      string
-	TinyUnsigned    string
-	SmallSigned     string
-	SmallUnsigned   string
-	MediumSigned    string
-	MediumUnsigned  string
-	IntSigned       string
-	IntUnsigned     string
-	BigSigned       string
-	BigUnsigned     string
-	FloatField      string
-	DoubleField     string
-	RealField       string
-	DecimalField    string
-	DecField        string
-	NumericField    string
-	FixedField      string
-	Bit1            string
-	Bit8            string
-	Bit64           string
-	BoolField       string
-	BooleanField    string
-	CharField       string
-	VarcharField    string
-	TextField       string
-	TinytextField   string
-	MediumtextField string
-	LongtextField   string
-	EnumField       string
-	SetField        string
-	BinaryField     string
-	VarbinaryField  string
-	BlobField       string
-	TinyblobField   string
-	MediumblobField string
-	LongblobField   string
-	DateField       string
-	TimeField       string
-	YearField       string
-	DatetimeField   string
-	TimestampField  string
-	UuidField       string
+	Id              string `json:",omitempty,omitzero"`
+	TinySigned      string `json:",omitempty,omitzero"`
+	TinyUnsigned    string `json:",omitempty,omitzero"`
+	SmallSigned     string `json:",omitempty,omitzero"`
+	SmallUnsigned   string `json:",omitempty,omitzero"`
+	MediumSigned    string `json:",omitempty,omitzero"`
+	MediumUnsigned  string `json:",omitempty,omitzero"`
+	IntSigned       string `json:",omitempty,omitzero"`
+	IntUnsigned     string `json:",omitempty,omitzero"`
+	BigSigned       string `json:",omitempty,omitzero"`
+	BigUnsigned     string `json:",omitempty,omitzero"`
+	FloatField      string `json:",omitempty,omitzero"`
+	DoubleField     string `json:",omitempty,omitzero"`
+	RealField       string `json:",omitempty,omitzero"`
+	DecimalField    string `json:",omitempty,omitzero"`
+	DecField        string `json:",omitempty,omitzero"`
+	NumericField    string `json:",omitempty,omitzero"`
+	FixedField      string `json:",omitempty,omitzero"`
+	Bit1            string `json:",omitempty,omitzero"`
+	Bit8            string `json:",omitempty,omitzero"`
+	Bit64           string `json:",omitempty,omitzero"`
+	BoolField       string `json:",omitempty,omitzero"`
+	BooleanField    string `json:",omitempty,omitzero"`
+	CharField       string `json:",omitempty,omitzero"`
+	VarcharField    string `json:",omitempty,omitzero"`
+	TextField       string `json:",omitempty,omitzero"`
+	TinytextField   string `json:",omitempty,omitzero"`
+	MediumtextField string `json:",omitempty,omitzero"`
+	LongtextField   string `json:",omitempty,omitzero"`
+	EnumField       string `json:",omitempty,omitzero"`
+	SetField        string `json:",omitempty,omitzero"`
+	BinaryField     string `json:",omitempty,omitzero"`
+	VarbinaryField  string `json:",omitempty,omitzero"`
+	BlobField       string `json:",omitempty,omitzero"`
+	TinyblobField   string `json:",omitempty,omitzero"`
+	MediumblobField string `json:",omitempty,omitzero"`
+	LongblobField   string `json:",omitempty,omitzero"`
+	DateField       string `json:",omitempty,omitzero"`
+	TimeField       string `json:",omitempty,omitzero"`
+	YearField       string `json:",omitempty,omitzero"`
+	DatetimeField   string `json:",omitempty,omitzero"`
+	TimestampField  string `json:",omitempty,omitzero"`
+	UuidField       string `json:",omitempty,omitzero"`
 }
 
 func SetDB(x *sql.DB) {

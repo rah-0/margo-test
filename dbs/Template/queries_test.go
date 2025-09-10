@@ -138,21 +138,18 @@ func TestQueryGetByUuid(t *testing.T) {
 	}
 
 	// Run the query using uuid as argument
-	results, err := QueryGetByUuid(u)
+	r, err := QueryGetByUuid(u)
 	if err != nil {
 		t.Fatal("query failed:", err)
 	}
 
 	found := false
-	for _, r := range results {
-		if r.Animal == "dog" && r.TestField == "unique" {
-			found = true
-			break
-		}
+	if r.Animal == "dog" && r.TestField == "unique" {
+		found = true
 	}
 
 	if !found {
-		t.Errorf("expected row with Animal=dog and TestField=unique not found in results: %+v", results)
+		t.Errorf("expected row with Animal=dog and TestField=unique not found in results: %+v", r)
 	}
 }
 
@@ -178,18 +175,14 @@ func TestQueryCountNullBigNumbers(t *testing.T) {
 		t.Fatal("insert failed:", err)
 	}
 
-	results, err := QueryCountNullBigNumbers()
+	result, err := QueryCountNullBigNumbers()
 	if err != nil {
 		t.Fatal("query failed:", err)
 	}
 
-	if len(results) == 0 {
-		t.Fatal("expected at least 1 result")
-	}
-
-	count, err := strconv.Atoi(results[0].Count)
+	count, err := strconv.Atoi(result.Count)
 	if err != nil {
-		t.Fatalf("invalid count returned: %v", results[0].Count)
+		t.Fatalf("invalid count returned: %v", result.Count)
 	}
 
 	if count < 1 {
@@ -197,210 +190,171 @@ func TestQueryCountNullBigNumbers(t *testing.T) {
 	}
 }
 
-func TestQueryInsertOne(t *testing.T) {
+func TestExecInsertOne(t *testing.T) {
 	u := uuid.NewString()
-
-	args := []any{
-		u,
-		"duck",     // Animal
-		"testmark", // test_field
-	}
-
-	rows, err := QueryInsertOne(args...)
-	if err != nil {
-		t.Fatal("insert query failed:", err)
-	}
-	rows.Close()
-
-	// Confirm inserted row
-	entity := &Alpha.Entity{Uuid: u}
-	ok, err := entity.DBExists([]string{Alpha.FieldUuid})
-	if err != nil {
-		t.Fatal("existence check failed:", err)
-	}
-	if !ok {
-		t.Errorf("expected row with uuid %s not found in DB", u)
-	}
-}
-
-func TestQueryInsertHardcoded(t *testing.T) {
-	// Run the query
-	rows, err := QueryInsertHardcoded()
-	if err != nil {
-		t.Fatal("insert hardcoded query failed:", err)
-	}
-	rows.Close()
-
-	// Confirm inserted row
-	entity := &Alpha.Entity{Uuid: "11111111-1111-4111-8111-111111111111"}
-	ok, err := entity.DBExists([]string{Alpha.FieldUuid})
-	if err != nil {
-		t.Fatal("existence check failed:", err)
-	}
-	if !ok {
-		t.Error("expected hardcoded row not found in DB")
-	}
-}
-
-func TestQueryUpdateAnimalName(t *testing.T) {
-	u := uuid.NewString()
-
-	// Insert initial row
-	row := &Alpha.Entity{
-		Uuid:        u,
-		FirstInsert: "2025-06-30 17:00:00",
-		LastUpdate:  "2025-06-30 17:00:00",
-		Animal:      "bear",
-		BigNumber:   "100",
-		TestField:   "update-test",
-	}
-	_, err := row.DBInsert(Alpha.Fields)
+	_, err := ExecInsertOne(u, "hedgehog", "tf")
 	if err != nil {
 		t.Fatal("insert failed:", err)
 	}
 
-	// Perform update
-	_, err = QueryUpdateAnimalName("lion", u)
+	r, err := QueryGetByUuid(u)
 	if err != nil {
-		t.Fatal("update query failed:", err)
+		t.Fatal("query failed:", err)
 	}
-
-	// Verify update
-	entity := &Alpha.Entity{Uuid: u}
-	ok, err := entity.DBExists([]string{Alpha.FieldUuid})
-	if err != nil {
-		t.Fatal("existence check failed:", err)
-	}
-	if !ok {
-		t.Fatal("expected row not found after update")
-	}
-	if entity.Animal != "lion" {
-		t.Errorf("expected Animal = lion, got: %s", entity.Animal)
+	if r == nil || r.Animal != "hedgehog" || r.TestField != "tf" {
+		t.Fatalf("row not inserted as expected: %+v", r)
 	}
 }
 
-func TestQueryUpdateTestField(t *testing.T) {
-	u := uuid.NewString()
+func TestExecInsertHardcoded(t *testing.T) {
+	const hard = "11111111-1111-4111-8111-111111111111"
 
-	// Insert a row with Animal = 'fox'
+	// ensure a clean slate for this uuid
+	_, _ = ExecDeleteByUuid(hard)
+
+	if _, err := ExecInsertHardcoded(); err != nil {
+		t.Fatal("insert hardcoded failed:", err)
+	}
+
+	r, err := QueryGetByUuid(hard)
+	if err != nil {
+		t.Fatal("query failed:", err)
+	}
+	if r == nil || r.Animal != "dog" {
+		t.Fatalf("expected Animal=dog for hardcoded uuid, got: %+v", r)
+	}
+}
+
+func TestExecUpdateAnimalName(t *testing.T) {
+	u := uuid.NewString()
 	row := &Alpha.Entity{
 		Uuid:        u,
-		FirstInsert: "2025-06-30 18:00:00",
-		LastUpdate:  "2025-06-30 18:00:00",
+		FirstInsert: "2025-06-30 10:00:00",
+		LastUpdate:  "2025-06-30 10:00:00",
+		Animal:      "cat",
+		TestField:   "x",
+	}
+	if _, err := row.DBInsert([]string{
+		Alpha.FieldUuid, Alpha.FieldFirstInsert, Alpha.FieldLastUpdate, Alpha.FieldAnimal, Alpha.FieldTestField,
+	}); err != nil {
+		t.Fatal("seed insert failed:", err)
+	}
+
+	if _, err := ExecUpdateAnimalName("otter", u); err != nil {
+		t.Fatal("update failed:", err)
+	}
+
+	r, err := QueryGetByUuid(u)
+	if err != nil {
+		t.Fatal("query failed:", err)
+	}
+	if r == nil || r.Animal != "otter" {
+		t.Fatalf("expected Animal=otter after update, got: %+v", r)
+	}
+}
+
+func TestExecUpdateTestField(t *testing.T) {
+	u := uuid.NewString()
+	row := &Alpha.Entity{
+		Uuid:        u,
+		FirstInsert: "2025-06-30 11:00:00",
+		LastUpdate:  "2025-06-30 11:00:00",
 		Animal:      "fox",
-		BigNumber:   "321",
-		TestField:   "oldval",
+		TestField:   "old",
 	}
-	_, err := row.DBInsert(Alpha.Fields)
-	if err != nil {
-		t.Fatal("insert failed:", err)
-	}
-
-	// Run the update
-	_, err = QueryUpdateTestField()
-	if err != nil {
-		t.Fatal("update query failed:", err)
+	if _, err := row.DBInsert([]string{
+		Alpha.FieldUuid, Alpha.FieldFirstInsert, Alpha.FieldLastUpdate, Alpha.FieldAnimal, Alpha.FieldTestField,
+	}); err != nil {
+		t.Fatal("seed insert failed:", err)
 	}
 
-	list, err := Alpha.DBSelectAll()
+	if _, err := ExecUpdateTestField(); err != nil {
+		t.Fatal("update failed:", err)
+	}
+
+	r, err := QueryGetByUuid(u)
 	if err != nil {
-		t.Fatal("select failed:", err)
+		t.Fatal("query failed:", err)
 	}
-	var found *Alpha.Entity
-	for _, item := range list {
-		if item != nil && item.Uuid == u {
-			found = item
-			break
-		}
-	}
-	if found == nil {
-		t.Fatal("expected row not found after update")
-	}
-	if found.TestField != "updated" {
-		t.Errorf("expected test_field = updated, got: %s", found.TestField)
+	if r == nil || r.TestField != "updated" {
+		t.Fatalf("expected test_field=updated after bulk update, got: %+v", r)
 	}
 }
 
-func TestQueryDeleteByUuid(t *testing.T) {
+func TestExecDeleteByUuid(t *testing.T) {
 	u := uuid.NewString()
-
-	// Insert a row to delete
 	row := &Alpha.Entity{
 		Uuid:        u,
-		FirstInsert: "2025-06-30 19:00:00",
-		LastUpdate:  "2025-06-30 19:00:00",
-		Animal:      "delete-me",
-		BigNumber:   "123",
-		TestField:   "to-delete",
+		FirstInsert: "2025-06-30 12:00:00",
+		LastUpdate:  "2025-06-30 12:00:00",
+		Animal:      "toad",
+		TestField:   "y",
 	}
-	_, err := row.DBInsert(Alpha.Fields)
-	if err != nil {
-		t.Fatal("insert failed:", err)
-	}
-
-	// Ensure row exists
-	found, err := row.DBExists([]string{Alpha.FieldUuid})
-	if err != nil {
-		t.Fatal("existence check failed:", err)
-	}
-	if !found {
-		t.Fatal("row not found before delete")
+	if _, err := row.DBInsert([]string{
+		Alpha.FieldUuid, Alpha.FieldFirstInsert, Alpha.FieldLastUpdate, Alpha.FieldAnimal, Alpha.FieldTestField,
+	}); err != nil {
+		t.Fatal("seed insert failed:", err)
 	}
 
-	// Run delete
-	_, err = QueryDeleteByUuid(u)
-	if err != nil {
-		t.Fatal("delete query failed:", err)
+	if _, err := ExecDeleteByUuid(u); err != nil {
+		t.Fatal("delete failed:", err)
 	}
 
-	// Verify deletion
-	found, err = row.DBExists([]string{Alpha.FieldUuid})
+	r, err := QueryGetByUuid(u)
 	if err != nil {
-		t.Fatal("existence check after delete failed:", err)
+		t.Fatal("query failed:", err)
 	}
-	if found {
-		t.Errorf("row with uuid %s should have been deleted", u)
+	if r != nil {
+		t.Fatalf("expected no row after delete, got: %+v", r)
 	}
 }
 
-func TestQueryDeleteOldRows(t *testing.T) {
-	u := uuid.NewString()
+func TestExecDeleteOldRows(t *testing.T) {
+	oldU := uuid.NewString()
+	newU := uuid.NewString()
 
-	// Insert a row with an old LastUpdate
-	row := &Alpha.Entity{
-		Uuid:        u,
-		FirstInsert: "2022-12-31 12:00:00",
-		LastUpdate:  "2022-12-31 12:00:00", // before the cutoff
-		Animal:      "old",
-		BigNumber:   "1",
-		TestField:   "obsolete",
+	oldRow := &Alpha.Entity{
+		Uuid:        oldU,
+		FirstInsert: "2022-12-31 23:59:59",
+		LastUpdate:  "2022-12-31 23:59:59",
+		Animal:      "ant",
+		TestField:   "old",
 	}
-	_, err := row.DBInsert(Alpha.Fields)
-	if err != nil {
-		t.Fatal("insert failed:", err)
+	newRow := &Alpha.Entity{
+		Uuid:        newU,
+		FirstInsert: "2025-01-01 00:00:01",
+		LastUpdate:  "2025-01-01 00:00:01",
+		Animal:      "bee",
+		TestField:   "new",
 	}
-
-	// Confirm row is present before deletion
-	found, err := row.DBExists([]string{Alpha.FieldUuid})
-	if err != nil {
-		t.Fatal("existence check failed:", err)
+	if _, err := oldRow.DBInsert([]string{
+		Alpha.FieldUuid, Alpha.FieldFirstInsert, Alpha.FieldLastUpdate, Alpha.FieldAnimal, Alpha.FieldTestField,
+	}); err != nil {
+		t.Fatal("seed old insert failed:", err)
 	}
-	if !found {
-		t.Fatal("row should exist before deletion")
-	}
-
-	// Run delete query
-	_, err = QueryDeleteOldRows()
-	if err != nil {
-		t.Fatal("delete query failed:", err)
+	if _, err := newRow.DBInsert([]string{
+		Alpha.FieldUuid, Alpha.FieldFirstInsert, Alpha.FieldLastUpdate, Alpha.FieldAnimal, Alpha.FieldTestField,
+	}); err != nil {
+		t.Fatal("seed new insert failed:", err)
 	}
 
-	// Confirm row is gone
-	found, err = row.DBExists([]string{Alpha.FieldUuid})
-	if err != nil {
-		t.Fatal("existence recheck failed:", err)
+	if _, err := ExecDeleteOldRows(); err != nil {
+		t.Fatal("delete old rows failed:", err)
 	}
-	if found {
-		t.Errorf("row with uuid %s should have been deleted", u)
+
+	ro, err := QueryGetByUuid(oldU)
+	if err != nil {
+		t.Fatal("query old failed:", err)
+	}
+	if ro != nil {
+		t.Fatalf("expected old row to be deleted, got: %+v", ro)
+	}
+
+	rn, err := QueryGetByUuid(newU)
+	if err != nil {
+		t.Fatal("query new failed:", err)
+	}
+	if rn == nil || rn.Animal != "bee" {
+		t.Fatalf("expected new row to remain, got: %+v", rn)
 	}
 }

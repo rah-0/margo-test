@@ -207,481 +207,529 @@ func readRows(fields []string, rows *sql.Rows) ([]*Entity, error) {
 		}
 		results = append(results, x)
 	}
+	if err := rows.Err(); err != nil {
+		return results, err
+	}
 	return results, nil
 }
 
-func DBTruncate() (sql.Result, error) {
-	query := "TRUNCATE TABLE " + FQTN
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
+func bindStmtCtxTx(base *sql.Stmt, ctx context.Context, tx *sql.Tx) (*sql.Stmt, bool) {
+	if tx == nil {
+		return base, false
 	}
-	return stmt.Exec()
+	if ctx != nil {
+		return tx.StmtContext(ctx, base), true
+	}
+	return tx.Stmt(base), true
 }
 
-func DBTruncateContext(ctx context.Context) (sql.Result, error) {
-	query := "TRUNCATE TABLE " + FQTN
+func execCore(ctx *context.Context, tx *sql.Tx, query string, args ...any) (res sql.Result, err error) {
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
-	return stmt.ExecContext(ctx)
+	var c context.Context
+	if ctx != nil {
+		c = *ctx
+	}
+	s, needClose := bindStmtCtxTx(stmt, c, tx)
+	if needClose {
+		defer func() {
+			if cerr := s.Close(); err == nil && cerr != nil {
+				err = cerr
+			}
+		}()
+	}
+	if ctx != nil {
+		return s.ExecContext(*ctx, args...)
+	}
+	return s.Exec(args...)
+}
+
+func queryCore(ctx *context.Context, tx *sql.Tx, fields []string, query string, args ...any) (out []*Entity, err error) {
+	stmt, err := getPreparedStmt(query)
+	if err != nil {
+		return nil, err
+	}
+	var c context.Context
+	if ctx != nil {
+		c = *ctx
+	}
+	s, needClose := bindStmtCtxTx(stmt, c, tx)
+	if needClose {
+		defer func() {
+			if cerr := s.Close(); err == nil && cerr != nil {
+				err = cerr
+			}
+		}()
+	}
+	var rows *sql.Rows
+	if ctx != nil {
+		rows, err = s.QueryContext(*ctx, args...)
+	} else {
+		rows, err = s.Query(args...)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return readRows(fields, rows)
+}
+
+func scalarCore(ctx *context.Context, tx *sql.Tx, query string, args ...any) (int, error) {
+	stmt, err := getPreparedStmt(query)
+	if err != nil {
+		return 0, err
+	}
+	var c context.Context
+	if ctx != nil {
+		c = *ctx
+	}
+	s, needClose := bindStmtCtxTx(stmt, c, tx)
+	if needClose {
+		defer s.Close()
+	}
+	var v int
+	if ctx != nil {
+		err = s.QueryRowContext(*ctx, args...).Scan(&v)
+	} else {
+		err = s.QueryRow(args...).Scan(&v)
+	}
+	return v, err
+}
+
+func DBTruncate() (sql.Result, error) { return execCore(nil, nil, "TRUNCATE TABLE "+FQTN) }
+func DBTruncateCtx(ctx context.Context) (sql.Result, error) {
+	return execCore(&ctx, nil, "TRUNCATE TABLE "+FQTN)
+}
+func DBTruncateTx(tx *sql.Tx) (sql.Result, error) { return execCore(nil, tx, "TRUNCATE TABLE "+FQTN) }
+func DBTruncateCtxTx(ctx context.Context, tx *sql.Tx) (sql.Result, error) {
+	return execCore(&ctx, tx, "TRUNCATE TABLE "+FQTN)
 }
 
 func (x *Entity) DBInsert(fieldsToInsert []string) (sql.Result, error) {
-	query := "INSERT INTO " + FQTN + " (" + strings.Join(GetQualifiedFields(fieldsToInsert), ", ") + ") VALUES (" + strings.Join(GetValuesPlaceholders(fieldsToInsert), ", ") + ")"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	return stmt.Exec(x.GetFieldsValues(fieldsToInsert)...)
+	q := "INSERT INTO " + FQTN + " (" + strings.Join(GetQualifiedFields(fieldsToInsert), ", ") + ") VALUES (" + strings.Join(GetValuesPlaceholders(fieldsToInsert), ", ") + ")"
+	return execCore(nil, nil, q, x.GetFieldsValues(fieldsToInsert)...)
 }
 
-func (x *Entity) DBInsertContext(ctx context.Context, fieldsToInsert []string) (sql.Result, error) {
-	query := "INSERT INTO " + FQTN + " (" + strings.Join(GetQualifiedFields(fieldsToInsert), ", ") + ") VALUES (" + strings.Join(GetValuesPlaceholders(fieldsToInsert), ", ") + ")"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	return stmt.ExecContext(ctx, x.GetFieldsValues(fieldsToInsert)...)
+func (x *Entity) DBInsertCtx(ctx context.Context, fieldsToInsert []string) (sql.Result, error) {
+	q := "INSERT INTO " + FQTN + " (" + strings.Join(GetQualifiedFields(fieldsToInsert), ", ") + ") VALUES (" + strings.Join(GetValuesPlaceholders(fieldsToInsert), ", ") + ")"
+	return execCore(&ctx, nil, q, x.GetFieldsValues(fieldsToInsert)...)
+}
+
+func (x *Entity) DBInsertTx(tx *sql.Tx, fieldsToInsert []string) (sql.Result, error) {
+	q := "INSERT INTO " + FQTN + " (" + strings.Join(GetQualifiedFields(fieldsToInsert), ", ") + ") VALUES (" + strings.Join(GetValuesPlaceholders(fieldsToInsert), ", ") + ")"
+	return execCore(nil, tx, q, x.GetFieldsValues(fieldsToInsert)...)
+}
+
+func (x *Entity) DBInsertCtxTx(ctx context.Context, tx *sql.Tx, fieldsToInsert []string) (sql.Result, error) {
+	q := "INSERT INTO " + FQTN + " (" + strings.Join(GetQualifiedFields(fieldsToInsert), ", ") + ") VALUES (" + strings.Join(GetValuesPlaceholders(fieldsToInsert), ", ") + ")"
+	return execCore(&ctx, tx, q, x.GetFieldsValues(fieldsToInsert)...)
 }
 
 func (x *Entity) DBDeleteWhereAll(fieldsToMatch []string) (sql.Result, error) {
-	query := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	return stmt.Exec(x.GetFieldsValues(fieldsToMatch)...)
+	q := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	return execCore(nil, nil, q, x.GetFieldsValues(fieldsToMatch)...)
 }
 
-func (x *Entity) DBDeleteWhereAllContext(ctx context.Context, fieldsToMatch []string) (sql.Result, error) {
-	query := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	return stmt.ExecContext(ctx, x.GetFieldsValues(fieldsToMatch)...)
+func (x *Entity) DBDeleteWhereAllCtx(ctx context.Context, fieldsToMatch []string) (sql.Result, error) {
+	q := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	return execCore(&ctx, nil, q, x.GetFieldsValues(fieldsToMatch)...)
+}
+
+func (x *Entity) DBDeleteWhereAllTx(tx *sql.Tx, fieldsToMatch []string) (sql.Result, error) {
+	q := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	return execCore(nil, tx, q, x.GetFieldsValues(fieldsToMatch)...)
+}
+
+func (x *Entity) DBDeleteWhereAllCtxTx(ctx context.Context, tx *sql.Tx, fieldsToMatch []string) (sql.Result, error) {
+	q := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	return execCore(&ctx, tx, q, x.GetFieldsValues(fieldsToMatch)...)
 }
 
 func (x *Entity) DBDeleteWhereAny(fieldsToMatch []string) (sql.Result, error) {
-	query := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	return stmt.Exec(x.GetFieldsValues(fieldsToMatch)...)
+	q := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	return execCore(nil, nil, q, x.GetFieldsValues(fieldsToMatch)...)
 }
 
-func (x *Entity) DBDeleteWhereAnyContext(ctx context.Context, fieldsToMatch []string) (sql.Result, error) {
-	query := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	return stmt.ExecContext(ctx, x.GetFieldsValues(fieldsToMatch)...)
+func (x *Entity) DBDeleteWhereAnyCtx(ctx context.Context, fieldsToMatch []string) (sql.Result, error) {
+	q := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	return execCore(&ctx, nil, q, x.GetFieldsValues(fieldsToMatch)...)
+}
+
+func (x *Entity) DBDeleteWhereAnyTx(tx *sql.Tx, fieldsToMatch []string) (sql.Result, error) {
+	q := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	return execCore(nil, tx, q, x.GetFieldsValues(fieldsToMatch)...)
+}
+
+func (x *Entity) DBDeleteWhereAnyCtxTx(ctx context.Context, tx *sql.Tx, fieldsToMatch []string) (sql.Result, error) {
+	q := "DELETE FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	return execCore(&ctx, tx, q, x.GetFieldsValues(fieldsToMatch)...)
 }
 
 func (x *Entity) DBUpdateWhereAll(fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
-	query := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	values := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
-	return stmt.Exec(values...)
+	q := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	vals := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
+	return execCore(nil, nil, q, vals...)
 }
 
-func (x *Entity) DBUpdateWhereAllContext(ctx context.Context, fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
-	query := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	values := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
-	return stmt.ExecContext(ctx, values...)
+func (x *Entity) DBUpdateWhereAllCtx(ctx context.Context, fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
+	q := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	vals := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
+	return execCore(&ctx, nil, q, vals...)
+}
+
+func (x *Entity) DBUpdateWhereAllTx(tx *sql.Tx, fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
+	q := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	vals := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
+	return execCore(nil, tx, q, vals...)
+}
+
+func (x *Entity) DBUpdateWhereAllCtxTx(ctx context.Context, tx *sql.Tx, fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
+	q := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	vals := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
+	return execCore(&ctx, tx, q, vals...)
 }
 
 func (x *Entity) DBUpdateWhereAny(fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
-	query := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	values := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
-	return stmt.Exec(values...)
+	q := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	vals := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
+	return execCore(nil, nil, q, vals...)
 }
 
-func (x *Entity) DBUpdateWhereAnyContext(ctx context.Context, fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
-	query := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	values := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
-	return stmt.ExecContext(ctx, values...)
+func (x *Entity) DBUpdateWhereAnyCtx(ctx context.Context, fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
+	q := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	vals := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
+	return execCore(&ctx, nil, q, vals...)
+}
+
+func (x *Entity) DBUpdateWhereAnyTx(tx *sql.Tx, fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
+	q := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	vals := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
+	return execCore(nil, tx, q, vals...)
+}
+
+func (x *Entity) DBUpdateWhereAnyCtxTx(ctx context.Context, tx *sql.Tx, fieldsToUpdate, fieldsToMatch []string) (sql.Result, error) {
+	q := "UPDATE " + FQTN + " SET " + strings.Join(GetQualifiedPlaceholders(fieldsToUpdate), ", ") + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	vals := append(x.GetFieldsValues(fieldsToUpdate), x.GetFieldsValues(fieldsToMatch)...)
+	return execCore(&ctx, tx, q, vals...)
 }
 
 func DBSelectAll() ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.Query()
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(Fields, rows)
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN
+	return queryCore(nil, nil, Fields, q)
 }
 
-func DBSelectAllContext(ctx context.Context) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.QueryContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(Fields, rows)
+func DBSelectAllCtx(ctx context.Context) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN
+	return queryCore(&ctx, nil, Fields, q)
+}
+
+func DBSelectAllTx(tx *sql.Tx) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN
+	return queryCore(nil, tx, Fields, q)
+}
+
+func DBSelectAllCtxTx(ctx context.Context, tx *sql.Tx) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN
+	return queryCore(&ctx, tx, Fields, q)
 }
 
 func DBSelectAllWithFields(fields []string) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.Query()
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(fields, rows)
+	q := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN
+	return queryCore(nil, nil, fields, q)
 }
 
-func DBSelectAllWithFieldsContext(ctx context.Context, fields []string) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.QueryContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(fields, rows)
+func DBSelectAllWithFieldsCtx(ctx context.Context, fields []string) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN
+	return queryCore(&ctx, nil, fields, q)
+}
+
+func DBSelectAllWithFieldsTx(tx *sql.Tx, fields []string) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN
+	return queryCore(nil, tx, fields, q)
+}
+
+func DBSelectAllWithFieldsCtxTx(ctx context.Context, tx *sql.Tx, fields []string) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN
+	return queryCore(&ctx, tx, fields, q)
 }
 
 func DBSubquerySelectAll(subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " " + subquery
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.Query(args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(Fields, rows)
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " " + subquery
+	return queryCore(nil, nil, Fields, q, args...)
 }
 
-func DBSubquerySelectAllContext(ctx context.Context, subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " " + subquery
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.QueryContext(ctx, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(Fields, rows)
+func DBSubquerySelectAllCtx(ctx context.Context, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " " + subquery
+	return queryCore(&ctx, nil, Fields, q, args...)
+}
+
+func DBSubquerySelectAllTx(tx *sql.Tx, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " " + subquery
+	return queryCore(nil, tx, Fields, q, args...)
+}
+
+func DBSubquerySelectAllCtxTx(ctx context.Context, tx *sql.Tx, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " " + subquery
+	return queryCore(&ctx, tx, Fields, q, args...)
 }
 
 func DBSubquerySelectAllWithFields(fields []string, subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN + " " + subquery
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.Query(args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(fields, rows)
+	q := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN + " " + subquery
+	return queryCore(nil, nil, fields, q, args...)
 }
 
-func DBSubquerySelectAllWithFieldsContext(ctx context.Context, fields []string, subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN + " " + subquery
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.QueryContext(ctx, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(fields, rows)
+func DBSubquerySelectAllWithFieldsCtx(ctx context.Context, fields []string, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN + " " + subquery
+	return queryCore(&ctx, nil, fields, q, args...)
+}
+
+func DBSubquerySelectAllWithFieldsTx(tx *sql.Tx, fields []string, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN + " " + subquery
+	return queryCore(nil, tx, fields, q, args...)
+}
+
+func DBSubquerySelectAllWithFieldsCtxTx(ctx context.Context, tx *sql.Tx, fields []string, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(fields), ", ") + " FROM " + FQTN + " " + subquery
+	return queryCore(&ctx, tx, fields, q, args...)
+}
+
+func (x *Entity) DBSubquerySelectAllWhereAll(fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?) " + subquery
+	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
+	return queryCore(nil, nil, Fields, q, allArgs...)
+}
+
+func (x *Entity) DBSubquerySelectAllWhereAllCtx(ctx context.Context, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?) " + subquery
+	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
+	return queryCore(&ctx, nil, Fields, q, allArgs...)
+}
+
+func (x *Entity) DBSubquerySelectAllWhereAllTx(tx *sql.Tx, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?) " + subquery
+	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
+	return queryCore(nil, tx, Fields, q, allArgs...)
+}
+
+func (x *Entity) DBSubquerySelectAllWhereAllCtxTx(ctx context.Context, tx *sql.Tx, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?) " + subquery
+	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
+	return queryCore(&ctx, tx, Fields, q, allArgs...)
+}
+
+func (x *Entity) DBSubquerySelectAllWhereAny(fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?) " + subquery
+	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
+	return queryCore(nil, nil, Fields, q, allArgs...)
+}
+
+func (x *Entity) DBSubquerySelectAllWhereAnyCtx(ctx context.Context, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?) " + subquery
+	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
+	return queryCore(&ctx, nil, Fields, q, allArgs...)
+}
+
+func (x *Entity) DBSubquerySelectAllWhereAnyTx(tx *sql.Tx, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?) " + subquery
+	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
+	return queryCore(nil, tx, Fields, q, allArgs...)
+}
+
+func (x *Entity) DBSubquerySelectAllWhereAnyCtxTx(ctx context.Context, tx *sql.Tx, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?) " + subquery
+	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
+	return queryCore(&ctx, tx, Fields, q, allArgs...)
 }
 
 func (x *Entity) DBSelectAllWhereAll(fieldsToMatch []string) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.Query(x.GetFieldsValues(fieldsToMatch)...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(Fields, rows)
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	return queryCore(nil, nil, Fields, q, x.GetFieldsValues(fieldsToMatch)...)
 }
 
-func (x *Entity) DBSelectAllWhereAllContext(ctx context.Context, fieldsToMatch []string) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.QueryContext(ctx, x.GetFieldsValues(fieldsToMatch)...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(Fields, rows)
+func (x *Entity) DBSelectAllWhereAllCtx(ctx context.Context, fieldsToMatch []string) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	return queryCore(&ctx, nil, Fields, q, x.GetFieldsValues(fieldsToMatch)...)
+}
+
+func (x *Entity) DBSelectAllWhereAllTx(tx *sql.Tx, fieldsToMatch []string) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	return queryCore(nil, tx, Fields, q, x.GetFieldsValues(fieldsToMatch)...)
+}
+
+func (x *Entity) DBSelectAllWhereAllCtxTx(ctx context.Context, tx *sql.Tx, fieldsToMatch []string) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?"
+	return queryCore(&ctx, tx, Fields, q, x.GetFieldsValues(fieldsToMatch)...)
 }
 
 func (x *Entity) DBSelectAllWhereAny(fieldsToMatch []string) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.Query(x.GetFieldsValues(fieldsToMatch)...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(Fields, rows)
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	return queryCore(nil, nil, Fields, q, x.GetFieldsValues(fieldsToMatch)...)
 }
 
-func (x *Entity) DBSelectAllWhereAnyContext(ctx context.Context, fieldsToMatch []string) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.QueryContext(ctx, x.GetFieldsValues(fieldsToMatch)...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(Fields, rows)
+func (x *Entity) DBSelectAllWhereAnyCtx(ctx context.Context, fieldsToMatch []string) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	return queryCore(&ctx, nil, Fields, q, x.GetFieldsValues(fieldsToMatch)...)
+}
+
+func (x *Entity) DBSelectAllWhereAnyTx(tx *sql.Tx, fieldsToMatch []string) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	return queryCore(nil, tx, Fields, q, x.GetFieldsValues(fieldsToMatch)...)
+}
+
+func (x *Entity) DBSelectAllWhereAnyCtxTx(ctx context.Context, tx *sql.Tx, fieldsToMatch []string) ([]*Entity, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?"
+	return queryCore(&ctx, tx, Fields, q, x.GetFieldsValues(fieldsToMatch)...)
 }
 
 func (x *Entity) DBExists(fields []string) (bool, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") +
-		" FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ? LIMIT 1"
-	stmt, err := getPreparedStmt(query)
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ? LIMIT 1"
+	res, err := queryCore(nil, nil, Fields, q, x.GetFieldsValues(fields)...)
 	if err != nil {
 		return false, err
 	}
-	rows, err := stmt.Query(x.GetFieldsValues(fields)...)
-	if err != nil {
-		return false, err
-	}
-	defer rows.Close()
-	results, err := readRows(Fields, rows)
-	if err != nil {
-		return false, err
-	}
-	if len(results) == 0 {
+	if len(res) == 0 {
 		return false, nil
 	}
-	*x = *results[0]
+	*x = *res[0]
 	return true, nil
 }
 
-func (x *Entity) DBExistsContext(ctx context.Context, fields []string) (bool, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") +
-		" FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ? LIMIT 1"
-	stmt, err := getPreparedStmt(query)
+func (x *Entity) DBExistsCtx(ctx context.Context, fields []string) (bool, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ? LIMIT 1"
+	res, err := queryCore(&ctx, nil, Fields, q, x.GetFieldsValues(fields)...)
 	if err != nil {
 		return false, err
 	}
-	rows, err := stmt.QueryContext(ctx, x.GetFieldsValues(fields)...)
-	if err != nil {
-		return false, err
-	}
-	defer rows.Close()
-	results, err := readRows(Fields, rows)
-	if err != nil {
-		return false, err
-	}
-	if len(results) == 0 {
+	if len(res) == 0 {
 		return false, nil
 	}
-	*x = *results[0]
+	*x = *res[0]
+	return true, nil
+}
+
+func (x *Entity) DBExistsTx(tx *sql.Tx, fields []string) (bool, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ? LIMIT 1"
+	res, err := queryCore(nil, tx, Fields, q, x.GetFieldsValues(fields)...)
+	if err != nil {
+		return false, err
+	}
+	if len(res) == 0 {
+		return false, nil
+	}
+	*x = *res[0]
+	return true, nil
+}
+
+func (x *Entity) DBExistsCtxTx(ctx context.Context, tx *sql.Tx, fields []string) (bool, error) {
+	q := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ? LIMIT 1"
+	res, err := queryCore(&ctx, tx, Fields, q, x.GetFieldsValues(fields)...)
+	if err != nil {
+		return false, err
+	}
+	if len(res) == 0 {
+		return false, nil
+	}
+	*x = *res[0]
 	return true, nil
 }
 
 func (x *Entity) DBCountWhereAll(fields []string) (int, error) {
-	query := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return 0, err
-	}
-	var count int
-	err = stmt.QueryRow(x.GetFieldsValues(fields)...).Scan(&count)
-	return count, err
+	q := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ?"
+	return scalarCore(nil, nil, q, x.GetFieldsValues(fields)...)
 }
 
-func (x *Entity) DBCountWhereAllContext(ctx context.Context, fields []string) (int, error) {
-	query := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return 0, err
-	}
-	var count int
-	err = stmt.QueryRowContext(ctx, x.GetFieldsValues(fields)...).Scan(&count)
-	return count, err
+func (x *Entity) DBCountWhereAllCtx(ctx context.Context, fields []string) (int, error) {
+	q := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ?"
+	return scalarCore(&ctx, nil, q, x.GetFieldsValues(fields)...)
+}
+
+func (x *Entity) DBCountWhereAllTx(tx *sql.Tx, fields []string) (int, error) {
+	q := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ?"
+	return scalarCore(nil, tx, q, x.GetFieldsValues(fields)...)
+}
+
+func (x *Entity) DBCountWhereAllCtxTx(ctx context.Context, tx *sql.Tx, fields []string) (int, error) {
+	q := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? AND ") + " = ?"
+	return scalarCore(&ctx, tx, q, x.GetFieldsValues(fields)...)
 }
 
 func (x *Entity) DBCountWhereAny(fields []string) (int, error) {
-	query := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? OR ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return 0, err
-	}
-	var count int
-	err = stmt.QueryRow(x.GetFieldsValues(fields)...).Scan(&count)
-	return count, err
+	q := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? OR ") + " = ?"
+	return scalarCore(nil, nil, q, x.GetFieldsValues(fields)...)
 }
 
-func (x *Entity) DBCountWhereAnyContext(ctx context.Context, fields []string) (int, error) {
-	query := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? OR ") + " = ?"
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return 0, err
-	}
-	var count int
-	err = stmt.QueryRowContext(ctx, x.GetFieldsValues(fields)...).Scan(&count)
-	return count, err
+func (x *Entity) DBCountWhereAnyCtx(ctx context.Context, fields []string) (int, error) {
+	q := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? OR ") + " = ?"
+	return scalarCore(&ctx, nil, q, x.GetFieldsValues(fields)...)
+}
+
+func (x *Entity) DBCountWhereAnyTx(tx *sql.Tx, fields []string) (int, error) {
+	q := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? OR ") + " = ?"
+	return scalarCore(nil, tx, q, x.GetFieldsValues(fields)...)
+}
+
+func (x *Entity) DBCountWhereAnyCtxTx(ctx context.Context, tx *sql.Tx, fields []string) (int, error) {
+	q := "SELECT COUNT(*) FROM " + FQTN + " WHERE " + strings.Join(GetQualifiedFields(fields), " = ? OR ") + " = ?"
+	return scalarCore(&ctx, tx, q, x.GetFieldsValues(fields)...)
 }
 
 func (x *Entity) DBFindOrCreate(fields []string) error {
-	exists, err := x.DBExists(fields)
+	ok, err := x.DBExists(fields)
 	if err != nil {
 		return err
 	}
-	if exists {
+	if ok {
 		return nil
 	}
-	_, err = x.DBInsert(fields)
-	if err != nil {
+	if _, err = x.DBInsert(fields); err != nil {
 		return err
 	}
 	_, err = x.DBExists(fields)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
-func (x *Entity) DBFindOrCreateContext(ctx context.Context, fields []string) error {
-	exists, err := x.DBExistsContext(ctx, fields)
+func (x *Entity) DBFindOrCreateCtx(ctx context.Context, fields []string) error {
+	ok, err := x.DBExistsCtx(ctx, fields)
 	if err != nil {
 		return err
 	}
-	if exists {
+	if ok {
 		return nil
 	}
-	_, err = x.DBInsertContext(ctx, fields)
+	if _, err = x.DBInsertCtx(ctx, fields); err != nil {
+		return err
+	}
+	_, err = x.DBExistsCtx(ctx, fields)
+	return err
+}
+
+func (x *Entity) DBFindOrCreateTx(tx *sql.Tx, fields []string) error {
+	ok, err := x.DBExistsTx(tx, fields)
 	if err != nil {
 		return err
 	}
-	_, err = x.DBExistsContext(ctx, fields)
+	if ok {
+		return nil
+	}
+	if _, err = x.DBInsertTx(tx, fields); err != nil {
+		return err
+	}
+	_, err = x.DBExistsTx(tx, fields)
+	return err
+}
+
+func (x *Entity) DBFindOrCreateCtxTx(ctx context.Context, tx *sql.Tx, fields []string) error {
+	ok, err := x.DBExistsCtxTx(ctx, tx, fields)
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func (x *Entity) DBSubquerySelectAllWhereAll(fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?) " + subquery
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
+	if ok {
+		return nil
 	}
-	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
-	rows, err := stmt.Query(allArgs...)
-	if err != nil {
-		return nil, err
+	if _, err = x.DBInsertCtxTx(ctx, tx, fields); err != nil {
+		return err
 	}
-	defer rows.Close()
-	return readRows(Fields, rows)
-}
-
-func (x *Entity) DBSubquerySelectAllWhereAllContext(ctx context.Context, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? AND ") + " = ?) " + subquery
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
-	rows, err := stmt.QueryContext(ctx, allArgs...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(Fields, rows)
-}
-
-func (x *Entity) DBSubquerySelectAllWhereAny(fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?) " + subquery
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
-	rows, err := stmt.Query(allArgs...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(Fields, rows)
-}
-
-func (x *Entity) DBSubquerySelectAllWhereAnyContext(ctx context.Context, fieldsToMatch []string, subquery string, args ...any) ([]*Entity, error) {
-	query := "SELECT " + strings.Join(GetQualifiedFields(Fields), ", ") + " FROM " + FQTN +
-		" WHERE (" + strings.Join(GetQualifiedFields(fieldsToMatch), " = ? OR ") + " = ?) " + subquery
-	stmt, err := getPreparedStmt(query)
-	if err != nil {
-		return nil, err
-	}
-	allArgs := append(x.GetFieldsValues(fieldsToMatch), args...)
-	rows, err := stmt.QueryContext(ctx, allArgs...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	return readRows(Fields, rows)
+	_, err = x.DBExistsCtxTx(ctx, tx, fields)
+	return err
 }

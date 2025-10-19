@@ -33,8 +33,9 @@ type Entity struct {
 	Name        string `json:",omitempty,omitzero"`
 }
 
-func SetDB(x *sql.DB) {
+func SetDB(x *sql.DB) error {
 	db = x
+	return nil
 }
 
 func (x *Entity) GetFieldValue(field string) any {

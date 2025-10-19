@@ -52,11 +52,45 @@ func SetDB(x *sql.DB) error {
 		q.Query = string(b)
 	}
 
-	AllTypes.SetDB(x)
-	Alpha.SetDB(x)
-	Beta.SetDB(x)
+	if err := AllTypes.SetDB(x); err != nil {
+		return err
+	}
+	if err := Alpha.SetDB(x); err != nil {
+		return err
+	}
+	if err := Beta.SetDB(x); err != nil {
+		return err
+	}
 
 	return nil
+}
+
+func NewTx() (*sql.Tx, error) {
+	if db == nil {
+		return nil, errors.New("db not initialized")
+	}
+	return db.Begin()
+}
+
+func NewCtxTx(ctx context.Context) (*sql.Tx, error) {
+	if db == nil {
+		return nil, errors.New("db not initialized")
+	}
+	return db.BeginTx(ctx, nil)
+}
+
+func NewTxOpts(opts *sql.TxOptions) (*sql.Tx, error) {
+	if db == nil {
+		return nil, errors.New("db not initialized")
+	}
+	return db.BeginTx(context.Background(), opts)
+}
+
+func NewCtxTxOpts(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	if db == nil {
+		return nil, errors.New("db not initialized")
+	}
+	return db.BeginTx(ctx, opts)
 }
 
 func getPreparedStmt(query string) (*sql.Stmt, error) {

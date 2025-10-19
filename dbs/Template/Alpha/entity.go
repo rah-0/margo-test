@@ -7,6 +7,7 @@ package Alpha
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"strings"
 	"sync"
 )
@@ -26,7 +27,16 @@ var (
 	db        *sql.DB
 	stmtMu    sync.RWMutex
 	stmtCache = make(map[string]*sql.Stmt)
+	queries   = map[string]*NamedQuery{
+		"GetAllAnimals": {QueryEncoded: "U0VMRUNUIGBBbmltYWxgCkZST00gYGFscGhhYA=="},
+	}
 )
+
+type NamedQuery struct {
+	Name         string
+	Query        string
+	QueryEncoded string
+}
 
 type Entity struct {
 	Uuid        string `json:",omitempty,omitzero"`
@@ -37,8 +47,16 @@ type Entity struct {
 	TestField   string `json:",omitempty,omitzero"`
 }
 
-func SetDB(x *sql.DB) {
+func SetDB(x *sql.DB) error {
 	db = x
+	for _, q := range queries {
+		b, err := base64.StdEncoding.DecodeString(q.QueryEncoded)
+		if err != nil {
+			return err
+		}
+		q.Query = string(b)
+	}
+	return nil
 }
 
 func (x *Entity) GetFieldValue(field string) any {
@@ -768,4 +786,21 @@ func (x *Entity) DBFindOrCreateCtxTx(ctx context.Context, tx *sql.Tx, fields []s
 	}
 	_, err = x.DBExistsCtxTx(ctx, tx, fields)
 	return err
+}
+
+func QueryGetAllAnimals() ([]*Entity, error) {
+	q := queries["GetAllAnimals"]
+	return queryCore(nil, nil, []string{FieldAnimal}, q.Query)
+}
+func QueryGetAllAnimalsCtx(ctx context.Context) ([]*Entity, error) {
+	q := queries["GetAllAnimals"]
+	return queryCore(&ctx, nil, []string{FieldAnimal}, q.Query)
+}
+func QueryGetAllAnimalsTx(tx *sql.Tx) ([]*Entity, error) {
+	q := queries["GetAllAnimals"]
+	return queryCore(nil, tx, []string{FieldAnimal}, q.Query)
+}
+func QueryGetAllAnimalsCtxTx(ctx context.Context, tx *sql.Tx) ([]*Entity, error) {
+	q := queries["GetAllAnimals"]
+	return queryCore(&ctx, tx, []string{FieldAnimal}, q.Query)
 }

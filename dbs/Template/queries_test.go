@@ -36,14 +36,14 @@ func TestMain(m *testing.M) {
 			return SetDB(c)
 		},
 		UnloadResources: func() error {
-			_, err := AllTypes.DBTruncate()
-			if err != nil {
-				return err
+			result1 := AllTypes.DBTruncate()
+			if result1.Error != nil {
+				return result1.Error
 			}
 
-			_, err = Alpha.DBTruncate()
-			if err != nil {
-				return err
+			result2 := Alpha.DBTruncate()
+			if result2.Error != nil {
+				return result2.Error
 			}
 
 			return c.Close()
@@ -63,18 +63,18 @@ func TestQueryGetAllAnimals(t *testing.T) {
 		BigNumber:   "9000",
 		TestField:   "test",
 	}
-	_, err := row.DBInsert(Alpha.Fields)
-	if err != nil {
-		t.Fatal("insert failed:", err)
+	result := row.DBInsert(Alpha.NewQueryParams().WithInsert(Alpha.Fields...))
+	if result.Error != nil {
+		t.Fatal("insert failed:", result.Error)
 	}
 
-	results, err := QueryGetAllAnimals()
-	if err != nil {
-		t.Fatal("query failed:", err)
+	qr := Alpha.QueryGetAllAnimals()
+	if qr.Error != nil {
+		t.Fatal("query failed:", qr.Error)
 	}
 
 	found := false
-	for _, r := range results {
+	for _, r := range qr.Entities {
 		if r.Animal == "cat" && r.BigNumber == "9000" {
 			found = true
 			break
@@ -82,7 +82,7 @@ func TestQueryGetAllAnimals(t *testing.T) {
 	}
 
 	if !found {
-		t.Errorf("expected row with Animal=cat and BigNumber=9000 not found in results: %+v", results)
+		t.Errorf("expected row with Animal=cat and BigNumber=9000 not found in results: %+v", qr.Entities)
 	}
 }
 
@@ -97,18 +97,18 @@ func TestQueryGetRecentCats(t *testing.T) {
 		BigNumber:   "12345",
 		TestField:   "recent",
 	}
-	_, err := row.DBInsert(Alpha.Fields)
-	if err != nil {
-		t.Fatal("insert failed:", err)
+	result := row.DBInsert(Alpha.NewQueryParams().WithInsert(Alpha.Fields...))
+	if result.Error != nil {
+		t.Fatal("insert failed:", result.Error)
 	}
 
-	results, err := QueryGetRecentCats()
-	if err != nil {
-		t.Fatal("query failed:", err)
+	qr := QueryGetRecentCats()
+	if qr.Error != nil {
+		t.Fatal("query failed:", qr.Error)
 	}
 
 	found := false
-	for _, r := range results {
+	for _, r := range qr.Results {
 		if r.Uuid == u {
 			found = true
 			break
@@ -116,7 +116,7 @@ func TestQueryGetRecentCats(t *testing.T) {
 	}
 
 	if !found {
-		t.Errorf("expected row with uuid %s not found in results: %+v", u, results)
+		t.Errorf("expected row with uuid %s not found in results: %+v", u, qr.Results)
 	}
 }
 
@@ -132,28 +132,31 @@ func TestQueryGetByUuid(t *testing.T) {
 		BigNumber:   "5555",
 		TestField:   "unique",
 	}
-	_, err := row.DBInsert(Alpha.Fields)
-	if err != nil {
-		t.Fatal("insert failed:", err)
+	result := row.DBInsert(Alpha.NewQueryParams().WithInsert(Alpha.Fields...))
+	if result.Error != nil {
+		t.Fatal("insert failed:", result.Error)
 	}
 
 	// Run the query using uuid as argument
-	r, err := QueryGetByUuid(u)
-	if err != nil {
-		t.Fatal("query failed:", err)
+	qr := QueryGetByUuid(NewQueryParams().WithParams(u))
+	if qr.Error != nil {
+		t.Fatal("query failed:", qr.Error)
 	}
 
 	found := false
-	if r.Animal == "dog" && r.TestField == "unique" {
-		found = true
+	if len(qr.Results) > 0 {
+		r := qr.Results[0]
+		if r.Animal == "dog" && r.TestField == "unique" {
+			found = true
+		}
 	}
 
 	if !found {
-		t.Errorf("expected row with Animal=dog and TestField=unique not found in results: %+v", r)
+		t.Errorf("expected row with Animal=dog and TestField=unique not found in results: %+v", qr.Results)
 	}
 }
 
-func TestQueryCountNullBigNumbers(t *testing.T) {
+func TestQueryCountBigNumbers(t *testing.T) {
 	u := uuid.NewString()
 
 	// Insert one row with BigNumber omitted (will be NULL)
@@ -164,25 +167,29 @@ func TestQueryCountNullBigNumbers(t *testing.T) {
 		Animal:      "nulltest",
 		TestField:   "checknull",
 	}
-	_, err := row.DBInsert([]string{
+	result := row.DBInsert(Alpha.NewQueryParams().WithInsert(
 		Alpha.FieldUuid,
 		Alpha.FieldFirstInsert,
 		Alpha.FieldLastUpdate,
 		Alpha.FieldAnimal,
 		Alpha.FieldTestField, // BigNumber is skipped = NULL
-	})
-	if err != nil {
-		t.Fatal("insert failed:", err)
+	))
+	if result.Error != nil {
+		t.Fatal("insert failed:", result.Error)
 	}
 
-	result, err := QueryCountNullBigNumbers()
-	if err != nil {
-		t.Fatal("query failed:", err)
+	qr := QueryCountBigNumbers()
+	if qr.Error != nil {
+		t.Fatal("query failed:", qr.Error)
 	}
 
-	count, err := strconv.Atoi(result.Count)
+	if len(qr.Results) == 0 {
+		t.Fatal("no results returned")
+	}
+
+	count, err := strconv.Atoi(qr.Results[0].Count)
 	if err != nil {
-		t.Fatalf("invalid count returned: %v", result.Count)
+		t.Fatalf("invalid count returned: %v", qr.Results[0].Count)
 	}
 
 	if count < 1 {
@@ -192,17 +199,17 @@ func TestQueryCountNullBigNumbers(t *testing.T) {
 
 func TestExecInsertOne(t *testing.T) {
 	u := uuid.NewString()
-	_, err := ExecInsertOne(u, "hedgehog", "tf")
-	if err != nil {
-		t.Fatal("insert failed:", err)
+	qr := ExecInsertOne(NewQueryParams().WithParams(u, "hedgehog", "tf"))
+	if qr.Error != nil {
+		t.Fatal("insert failed:", qr.Error)
 	}
 
-	r, err := QueryGetByUuid(u)
-	if err != nil {
-		t.Fatal("query failed:", err)
+	r := QueryGetByUuid(NewQueryParams().WithParams(u))
+	if r.Error != nil {
+		t.Fatal("query failed:", r.Error)
 	}
-	if r == nil || r.Animal != "hedgehog" || r.TestField != "tf" {
-		t.Fatalf("row not inserted as expected: %+v", r)
+	if len(r.Results) == 0 || r.Results[0].Animal != "hedgehog" || r.Results[0].TestField != "tf" {
+		t.Fatalf("row not inserted as expected: %+v", r.Results)
 	}
 }
 
@@ -210,18 +217,19 @@ func TestExecInsertHardcoded(t *testing.T) {
 	const hard = "11111111-1111-4111-8111-111111111111"
 
 	// ensure a clean slate for this uuid
-	_, _ = ExecDeleteByUuid(hard)
+	_ = ExecDeleteByUuid(NewQueryParams().WithParams(hard))
 
-	if _, err := ExecInsertHardcoded(); err != nil {
-		t.Fatal("insert hardcoded failed:", err)
+	qr := ExecInsertHardcoded()
+	if qr.Error != nil {
+		t.Fatal("insert hardcoded failed:", qr.Error)
 	}
 
-	r, err := QueryGetByUuid(hard)
-	if err != nil {
-		t.Fatal("query failed:", err)
+	r := QueryGetByUuid(NewQueryParams().WithParams(hard))
+	if r.Error != nil {
+		t.Fatal("query failed:", r.Error)
 	}
-	if r == nil || r.Animal != "dog" {
-		t.Fatalf("expected Animal=dog for hardcoded uuid, got: %+v", r)
+	if len(r.Results) == 0 || r.Results[0].Animal != "dog" {
+		t.Fatalf("expected Animal=dog for hardcoded uuid, got: %+v", r.Results)
 	}
 }
 
@@ -234,22 +242,24 @@ func TestExecUpdateAnimalName(t *testing.T) {
 		Animal:      "cat",
 		TestField:   "x",
 	}
-	if _, err := row.DBInsert([]string{
+	result := row.DBInsert(Alpha.NewQueryParams().WithInsert(
 		Alpha.FieldUuid, Alpha.FieldFirstInsert, Alpha.FieldLastUpdate, Alpha.FieldAnimal, Alpha.FieldTestField,
-	}); err != nil {
-		t.Fatal("seed insert failed:", err)
+	))
+	if result.Error != nil {
+		t.Fatal("seed insert failed:", result.Error)
 	}
 
-	if _, err := ExecUpdateAnimalName("otter", u); err != nil {
-		t.Fatal("update failed:", err)
+	qr := ExecUpdateAnimalName(NewQueryParams().WithParams("otter", u))
+	if qr.Error != nil {
+		t.Fatal("update failed:", qr.Error)
 	}
 
-	r, err := QueryGetByUuid(u)
-	if err != nil {
-		t.Fatal("query failed:", err)
+	r := QueryGetByUuid(NewQueryParams().WithParams(u))
+	if r.Error != nil {
+		t.Fatal("query failed:", r.Error)
 	}
-	if r == nil || r.Animal != "otter" {
-		t.Fatalf("expected Animal=otter after update, got: %+v", r)
+	if len(r.Results) == 0 || r.Results[0].Animal != "otter" {
+		t.Fatalf("expected Animal=otter after update, got: %+v", r.Results)
 	}
 }
 
@@ -262,22 +272,24 @@ func TestExecUpdateTestField(t *testing.T) {
 		Animal:      "fox",
 		TestField:   "old",
 	}
-	if _, err := row.DBInsert([]string{
+	result := row.DBInsert(Alpha.NewQueryParams().WithInsert(
 		Alpha.FieldUuid, Alpha.FieldFirstInsert, Alpha.FieldLastUpdate, Alpha.FieldAnimal, Alpha.FieldTestField,
-	}); err != nil {
-		t.Fatal("seed insert failed:", err)
+	))
+	if result.Error != nil {
+		t.Fatal("seed insert failed:", result.Error)
 	}
 
-	if _, err := ExecUpdateTestField(); err != nil {
-		t.Fatal("update failed:", err)
+	qr := ExecUpdateTestField()
+	if qr.Error != nil {
+		t.Fatal("update failed:", qr.Error)
 	}
 
-	r, err := QueryGetByUuid(u)
-	if err != nil {
-		t.Fatal("query failed:", err)
+	r := QueryGetByUuid(NewQueryParams().WithParams(u))
+	if r.Error != nil {
+		t.Fatal("query failed:", r.Error)
 	}
-	if r == nil || r.TestField != "updated" {
-		t.Fatalf("expected test_field=updated after bulk update, got: %+v", r)
+	if len(r.Results) == 0 || r.Results[0].TestField != "updated" {
+		t.Fatalf("expected test_field=updated after bulk update, got: %+v", r.Results)
 	}
 }
 
@@ -290,22 +302,24 @@ func TestExecDeleteByUuid(t *testing.T) {
 		Animal:      "toad",
 		TestField:   "y",
 	}
-	if _, err := row.DBInsert([]string{
+	result := row.DBInsert(Alpha.NewQueryParams().WithInsert(
 		Alpha.FieldUuid, Alpha.FieldFirstInsert, Alpha.FieldLastUpdate, Alpha.FieldAnimal, Alpha.FieldTestField,
-	}); err != nil {
-		t.Fatal("seed insert failed:", err)
+	))
+	if result.Error != nil {
+		t.Fatal("seed insert failed:", result.Error)
 	}
 
-	if _, err := ExecDeleteByUuid(u); err != nil {
-		t.Fatal("delete failed:", err)
+	qr := ExecDeleteByUuid(NewQueryParams().WithParams(u))
+	if qr.Error != nil {
+		t.Fatal("delete failed:", qr.Error)
 	}
 
-	r, err := QueryGetByUuid(u)
-	if err != nil {
-		t.Fatal("query failed:", err)
+	r := QueryGetByUuid(NewQueryParams().WithParams(u))
+	if r.Error != nil {
+		t.Fatal("query failed:", r.Error)
 	}
-	if r != nil {
-		t.Fatalf("expected no row after delete, got: %+v", r)
+	if len(r.Results) > 0 {
+		t.Fatalf("expected no row after delete, got: %+v", r.Results)
 	}
 }
 
@@ -327,34 +341,37 @@ func TestExecDeleteOldRows(t *testing.T) {
 		Animal:      "bee",
 		TestField:   "new",
 	}
-	if _, err := oldRow.DBInsert([]string{
+	result := oldRow.DBInsert(Alpha.NewQueryParams().WithInsert(
 		Alpha.FieldUuid, Alpha.FieldFirstInsert, Alpha.FieldLastUpdate, Alpha.FieldAnimal, Alpha.FieldTestField,
-	}); err != nil {
-		t.Fatal("seed old insert failed:", err)
+	))
+	if result.Error != nil {
+		t.Fatal("seed old insert failed:", result.Error)
 	}
-	if _, err := newRow.DBInsert([]string{
+	result = newRow.DBInsert(Alpha.NewQueryParams().WithInsert(
 		Alpha.FieldUuid, Alpha.FieldFirstInsert, Alpha.FieldLastUpdate, Alpha.FieldAnimal, Alpha.FieldTestField,
-	}); err != nil {
-		t.Fatal("seed new insert failed:", err)
+	))
+	if result.Error != nil {
+		t.Fatal("seed new insert failed:", result.Error)
 	}
 
-	if _, err := ExecDeleteOldRows(); err != nil {
-		t.Fatal("delete old rows failed:", err)
+	qr := ExecDeleteOldRows()
+	if qr.Error != nil {
+		t.Fatal("delete old rows failed:", qr.Error)
 	}
 
-	ro, err := QueryGetByUuid(oldU)
-	if err != nil {
-		t.Fatal("query old failed:", err)
+	ro := QueryGetByUuid(NewQueryParams().WithParams(oldU))
+	if ro.Error != nil {
+		t.Fatal("query old failed:", ro.Error)
 	}
-	if ro != nil {
-		t.Fatalf("expected old row to be deleted, got: %+v", ro)
+	if len(ro.Results) > 0 {
+		t.Fatalf("expected old row to be deleted, got: %+v", ro.Results)
 	}
 
-	rn, err := QueryGetByUuid(newU)
-	if err != nil {
-		t.Fatal("query new failed:", err)
+	rn := QueryGetByUuid(NewQueryParams().WithParams(newU))
+	if rn.Error != nil {
+		t.Fatal("query new failed:", rn.Error)
 	}
-	if rn == nil || rn.Animal != "bee" {
-		t.Fatalf("expected new row to remain, got: %+v", rn)
+	if len(rn.Results) == 0 || rn.Results[0].Animal != "bee" {
+		t.Fatalf("expected new row to remain, got: %+v", rn.Results)
 	}
 }

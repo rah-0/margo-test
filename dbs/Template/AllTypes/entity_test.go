@@ -34,9 +34,9 @@ func TestMain(m *testing.M) {
 			return err
 		},
 		UnloadResources: func() error {
-			_, err := DBTruncate()
-			if err != nil {
-				return err
+			result := DBTruncate()
+			if result.Error != nil {
+				return result.Error
 			}
 			return c.Close()
 		},
@@ -91,20 +91,20 @@ func TestAllFieldsRoundtrip(t *testing.T) {
 		UuidField:       u,
 	}
 
-	_, err := e.DBInsert(Fields)
-	if err != nil {
-		t.Fatal(err)
+	result := e.DBInsert(NewQueryParams().WithInsert(Fields...))
+	if result.Error != nil {
+		t.Fatal(result.Error)
 	}
 
-	list, err := DBSelectAll()
-	if err != nil {
-		t.Fatal(err)
+	result = DBSelectAll()
+	if result.Error != nil {
+		t.Fatal(result.Error)
 	}
 
 	var found *Entity
-	for i := range list {
-		if list[i].UuidField == u {
-			found = list[i]
+	for i := range result.Entities {
+		if result.Entities[i].UuidField == u {
+			found = result.Entities[i]
 			break
 		}
 	}

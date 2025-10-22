@@ -31,8 +31,8 @@ func (Alpha) TableName() string {
 func BenchmarkEntityDBInsertRawSQL(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 
@@ -61,8 +61,8 @@ func BenchmarkEntityDBInsertRawSQL(b *testing.B) {
 func BenchmarkEntityDBInsertMarGO(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 
@@ -79,8 +79,8 @@ func BenchmarkEntityDBInsertMarGO(b *testing.B) {
 		}
 		b.StartTimer()
 
-		_, err := e.DBInsert(Fields)
-		if err != nil {
+		result := e.DBInsert(NewQueryParams().WithInsert(Fields...))
+		if err := result.Error; err != nil {
 			b.Fatalf("insert failed: %v", err)
 		}
 	}
@@ -89,8 +89,8 @@ func BenchmarkEntityDBInsertMarGO(b *testing.B) {
 func BenchmarkEntityDBInsertBun(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 
@@ -115,8 +115,8 @@ func BenchmarkEntityDBInsertBun(b *testing.B) {
 func BenchmarkEntityDBInsertGorm(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 
@@ -146,8 +146,8 @@ func BenchmarkEntityDBInsertGorm(b *testing.B) {
 func BenchmarkEntityDBInsertEnt(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 
@@ -173,8 +173,8 @@ func BenchmarkEntityDBInsertEnt(b *testing.B) {
 func BenchmarkEntityDBDeleteRawSQL(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 
@@ -218,8 +218,8 @@ func BenchmarkEntityDBDeleteRawSQL(b *testing.B) {
 func BenchmarkEntityDBDeleteMarGO(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 
@@ -233,8 +233,8 @@ func BenchmarkEntityDBDeleteMarGO(b *testing.B) {
 			BigNumber:   "1234567890",
 			TestField:   "Test",
 		}
-		_, err := e.DBInsert(Fields)
-		if err != nil {
+		result := e.DBInsert(NewQueryParams().WithInsert(Fields...))
+		if err := result.Error; err != nil {
 			b.Fatal(err)
 		}
 		entities[i] = e
@@ -242,7 +242,8 @@ func BenchmarkEntityDBDeleteMarGO(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if _, err := entities[i].DBDeleteWhereAll([]string{FieldUuid}); err != nil {
+		result := entities[i].DBDelete(NewQueryParams().WithWhere(FieldUuid))
+	if err := result.Error; err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -251,8 +252,8 @@ func BenchmarkEntityDBDeleteMarGO(b *testing.B) {
 func BenchmarkEntityDBDeleteGorm(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 
@@ -290,8 +291,8 @@ func BenchmarkEntityDBDeleteGorm(b *testing.B) {
 func BenchmarkEntityDBDeleteBun(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 
@@ -326,8 +327,8 @@ func BenchmarkEntityDBDeleteBun(b *testing.B) {
 func BenchmarkEntityDBDeleteEnt(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 
@@ -364,8 +365,8 @@ func BenchmarkEntityDBDeleteEnt(b *testing.B) {
 func BenchmarkEntityDBSelectRawSQL(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 
@@ -420,8 +421,8 @@ func BenchmarkEntityDBSelectRawSQL(b *testing.B) {
 func BenchmarkEntityDBSelectMarGO(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 
@@ -435,7 +436,8 @@ func BenchmarkEntityDBSelectMarGO(b *testing.B) {
 			BigNumber:   "1234567890",
 			TestField:   "Test",
 		}
-		if _, err := e.DBInsert(Fields); err != nil {
+		result := e.DBInsert(NewQueryParams().WithInsert(Fields...))
+		if err := result.Error; err != nil {
 			b.Fatal(err)
 		}
 		entities[i] = e
@@ -446,7 +448,8 @@ func BenchmarkEntityDBSelectMarGO(b *testing.B) {
 		e := &Entity{
 			Uuid: entities[i].Uuid,
 		}
-		ok, err := e.DBExists([]string{FieldUuid})
+		result := e.DBExists(NewQueryParams().WithWhere(FieldUuid))
+	ok, err := result.Exists, result.Error
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -459,8 +462,8 @@ func BenchmarkEntityDBSelectMarGO(b *testing.B) {
 func BenchmarkEntityDBSelectBun(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 
@@ -499,8 +502,8 @@ func BenchmarkEntityDBSelectBun(b *testing.B) {
 func BenchmarkEntityDBSelectGorm(b *testing.B) {
 	b.Skip()
 
-	_, err := DBTruncate()
-	if err != nil {
+	result := DBTruncate()
+	if err := result.Error; err != nil {
 		b.Fatalf("setup failed: %v", err)
 	}
 

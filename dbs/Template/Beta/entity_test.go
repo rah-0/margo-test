@@ -31,9 +31,9 @@ func TestMain(m *testing.M) {
 			return err
 		},
 		UnloadResources: func() error {
-			_, err := DBTruncate()
-			if err != nil {
-				return err
+			result := DBTruncate()
+			if result.Error != nil {
+				return result.Error
 			}
 
 			return c.Close()
@@ -48,28 +48,28 @@ func TestEntityLastUpdateManualOverride(t *testing.T) {
 	}
 
 	// Insert entity
-	_, err := e.DBInsert([]string{FieldUuid, FieldName})
-	if err != nil {
-		t.Fatal("insert failed:", err)
+	result := e.DBInsert(NewQueryParams().WithInsert(FieldUuid, FieldName))
+	if result.Error != nil {
+		t.Fatal("insert failed:", result.Error)
 	}
 
 	// Attempt to manually override last_update with a past timestamp
 	expected := "2000-01-01 00:00:00.123456"
 	e.LastUpdate = expected
 
-	_, err = e.DBUpdateWhereAll([]string{FieldLastUpdate}, []string{FieldUuid})
-	if err != nil {
-		t.Fatal("update failed:", err)
+	result = e.DBUpdate(NewQueryParams().WithUpdate(FieldLastUpdate).WithWhere(FieldUuid))
+	if result.Error != nil {
+		t.Fatal("update failed:", result.Error)
 	}
 
 	// Fetch back using DBExists
 	var check Entity
 	check.Uuid = e.Uuid
-	found, err := check.DBExists([]string{FieldUuid})
-	if err != nil {
-		t.Fatal("DBExists failed:", err)
+	result = check.DBExists(NewQueryParams().WithWhere(FieldUuid))
+	if result.Error != nil {
+		t.Fatal("DBExists failed:", result.Error)
 	}
-	if !found {
+	if !result.Exists {
 		t.Fatal("entity not found after update")
 	}
 

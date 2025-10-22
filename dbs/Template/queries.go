@@ -21,17 +21,16 @@ var (
 	stmtMu    sync.RWMutex
 	stmtCache = make(map[string]*sql.Stmt)
 	queries   = map[string]*NamedQuery{
-		"GetAllAnimals":       {QueryEncoded: "U0VMRUNUIGBBbmltYWxgLCBgQmlnTnVtYmVyYApGUk9NIGBhbHBoYWA="},
-		"GetRecentCats":       {QueryEncoded: "U0VMRUNUIGBVdWlkYCwgYExhc3RVcGRhdGVgCkZST00gYGFscGhhYApXSEVSRSBgQW5pbWFsYCA9ICdjYXQnIEFORCBgTGFzdFVwZGF0ZWAgPiAnMjAyNC0wMS0wMSAwMDowMDowMC4wMDAwMDAn"},
-		"GetByUuid":           {QueryEncoded: "U0VMRUNUIGBBbmltYWxgLCBgdGVzdF9maWVsZGAKRlJPTSBgYWxwaGFgCldIRVJFIGBVdWlkYCA9ID8="},
-		"CountNullBigNumbers": {QueryEncoded: "U0VMRUNUIENPVU5UKCopIEFTIGBjb3VudGAKRlJPTSBgYWxwaGFgCldIRVJFIGBCaWdOdW1iZXJgIElTIE5VTEw="},
-		"InsertOne":           {QueryEncoded: "SU5TRVJUIElOVE8gYGFscGhhYCAoYFV1aWRgLCBgQW5pbWFsYCwgYHRlc3RfZmllbGRgKQpWQUxVRVMgKD8sID8sID8p"},
-		"InsertHardcoded":     {QueryEncoded: "SU5TRVJUIElOVE8gYGFscGhhYCAoYFV1aWRgLCBgQW5pbWFsYCkKVkFMVUVTICgnMTExMTExMTEtMTExMS00MTExLTgxMTEtMTExMTExMTExMTExJywgJ2RvZycp"},
-		"UpdateAnimalName":    {QueryEncoded: "VVBEQVRFIGBhbHBoYWAKU0VUIGBBbmltYWxgID0gPwpXSEVSRSBgVXVpZGAgPSA/"},
-		"UpdateTestField":     {QueryEncoded: "VVBEQVRFIGBhbHBoYWAKU0VUIGB0ZXN0X2ZpZWxkYCA9ICd1cGRhdGVkJwpXSEVSRSBgQW5pbWFsYCA9ICdmb3gn"},
-		"DeleteByUuid":        {QueryEncoded: "REVMRVRFIEZST00gYGFscGhhYCBXSEVSRSBgVXVpZGAgPSA/"},
-		"DeleteOldRows":       {QueryEncoded: "REVMRVRFIEZST00gYGFscGhhYCBXSEVSRSBgTGFzdFVwZGF0ZWAgPCAnMjAyMy0wMS0wMSAwMDowMDowMC4wMDAwMDAn"},
-		"SampleTest":          {QueryEncoded: "V0lUSCBzZWxlY3RlZF91c2VyX3BsYW4gQVMgKAogICAgU0VMRUNUIHVwLnVzZXJfaWQsIHVwLnBsYW5faWQKICAgIEZST00gdXNlcl9wbGFuIHVwCiAgICAgICAgICAgICBKT0lOIHBsYW4gcCBPTiBwLmlkID0gdXAucGxhbl9pZAogICAgV0hFUkUgdXAudXNlcl9pZCA9ID8KICAgIE9SREVSIEJZIHAucHJpY2UgREVTQwogICAgTElNSVQgMQopClNFTEVDVAogICAgQ09BTEVTQ0UoU1VNKGYuc2l6ZV9ieXRlcyksIDApIEFTIHRvdGFsX3N0b3JhZ2VfdXNlZCwKICAgIChDT1VOVChmLmlkKSA+PSBwLm1heF9maWxlX2NvdW50KSBBUyByZWFjaGVkX2ZpbGVfbGltaXQsCiAgICAoQ09BTEVTQ0UoU1VNKGYuc2l6ZV9ieXRlcyksIDApID49IHAubWF4X3N0b3JhZ2VfYnl0ZXMpIEFTIGV4Y2VlZGVkX3N0b3JhZ2VfbGltaXQKRlJPTSBzZWxlY3RlZF91c2VyX3BsYW4gc3AKICAgICAgICAgSk9JTiBwbGFuIHAgT04gcC5pZCA9IHNwLnBsYW5faWQKICAgICAgICAgTEVGVCBKT0lOIGZpbGUgZiBPTiBmLnVzZXJfaWQgPSBzcC51c2VyX2lkCkdST1VQIEJZIHNwLnVzZXJfaWQsIHAubWF4X2ZpbGVfY291bnQsIHAubWF4X3N0b3JhZ2VfYnl0ZXM="},
+		"CountBigNumbers":  {QueryEncoded: "U0VMRUNUIENPVU5UKCopIEFTIGBjb3VudGAKRlJPTSBgYWxwaGFgCldIRVJFIGBCaWdOdW1iZXJgIElTIE5VTEw="},
+		"DeleteByUuid":     {QueryEncoded: "REVMRVRFIEZST00gYGFscGhhYCBXSEVSRSBgVXVpZGAgPSA/"},
+		"DeleteOldRows":    {QueryEncoded: "REVMRVRFIEZST00gYGFscGhhYCBXSEVSRSBgTGFzdFVwZGF0ZWAgPCAnMjAyMy0wMS0wMSAwMDowMDowMC4wMDAwMDAn"},
+		"GetByUuid":        {QueryEncoded: "U0VMRUNUIGBBbmltYWxgLCBgdGVzdF9maWVsZGAKRlJPTSBgYWxwaGFgCldIRVJFIGBVdWlkYCA9ID8="},
+		"GetRecentCats":    {QueryEncoded: "U0VMRUNUIGBVdWlkYCwgYExhc3RVcGRhdGVgCkZST00gYGFscGhhYApXSEVSRSBgQW5pbWFsYCA9ICdjYXQnIEFORCBgTGFzdFVwZGF0ZWAgPiAnMjAyNC0wMS0wMSAwMDowMDowMC4wMDAwMDAn"},
+		"InsertHardcoded":  {QueryEncoded: "SU5TRVJUIElOVE8gYGFscGhhYCAoYFV1aWRgLCBgQW5pbWFsYCkKVkFMVUVTICgnMTExMTExMTEtMTExMS00MTExLTgxMTEtMTExMTExMTExMTExJywgJ2RvZycp"},
+		"InsertOne":        {QueryEncoded: "SU5TRVJUIElOVE8gYGFscGhhYCAoYFV1aWRgLCBgQW5pbWFsYCwgYHRlc3RfZmllbGRgKQpWQUxVRVMgKD8sID8sID8p"},
+		"SampleTest":       {QueryEncoded: "V0lUSCBzZWxlY3RlZF91c2VyX3BsYW4gQVMgKAogICAgU0VMRUNUIHVwLnVzZXJfaWQsIHVwLnBsYW5faWQKICAgIEZST00gdXNlcl9wbGFuIHVwCiAgICAgICAgICAgICBKT0lOIHBsYW4gcCBPTiBwLmlkID0gdXAucGxhbl9pZAogICAgV0hFUkUgdXAudXNlcl9pZCA9ID8KICAgIE9SREVSIEJZIHAucHJpY2UgREVTQwogICAgTElNSVQgMQopClNFTEVDVAogICAgQ09BTEVTQ0UoU1VNKGYuc2l6ZV9ieXRlcyksIDApIEFTIHRvdGFsX3N0b3JhZ2VfdXNlZCwKICAgIChDT1VOVChmLmlkKSA+PSBwLm1heF9maWxlX2NvdW50KSBBUyByZWFjaGVkX2ZpbGVfbGltaXQsCiAgICAoQ09BTEVTQ0UoU1VNKGYuc2l6ZV9ieXRlcyksIDApID49IHAubWF4X3N0b3JhZ2VfYnl0ZXMpIEFTIGV4Y2VlZGVkX3N0b3JhZ2VfbGltaXQKRlJPTSBzZWxlY3RlZF91c2VyX3BsYW4gc3AKICAgICAgICAgSk9JTiBwbGFuIHAgT04gcC5pZCA9IHNwLnBsYW5faWQKICAgICAgICAgTEVGVCBKT0lOIGZpbGUgZiBPTiBmLnVzZXJfaWQgPSBzcC51c2VyX2lkCkdST1VQIEJZIHNwLnVzZXJfaWQsIHAubWF4X2ZpbGVfY291bnQsIHAubWF4X3N0b3JhZ2VfYnl0ZXM="},
+		"UpdateAnimalName": {QueryEncoded: "VVBEQVRFIGBhbHBoYWAKU0VUIGBBbmltYWxgID0gPwpXSEVSRSBgVXVpZGAgPSA/"},
+		"UpdateTestField":  {QueryEncoded: "VVBEQVRFIGBhbHBoYWAKU0VUIGB0ZXN0X2ZpZWxkYCA9ICd1cGRhdGVkJwpXSEVSRSBgQW5pbWFsYCA9ICdmb3gn"},
 	}
 )
 
@@ -39,6 +38,19 @@ type NamedQuery struct {
 	Name         string
 	Query        string
 	QueryEncoded string
+}
+
+type QueryParams struct {
+	Params []any
+}
+
+func NewQueryParams() *QueryParams {
+	return &QueryParams{}
+}
+
+func (qp *QueryParams) WithParams(params ...any) *QueryParams {
+	qp.Params = params
+	return qp
 }
 
 func SetDB(x *sql.DB) error {
@@ -124,176 +136,186 @@ func bindStmtCtxTx(base *sql.Stmt, ctx context.Context, tx *sql.Tx) (*sql.Stmt, 
 	return tx.Stmt(base), true
 }
 
-type QueryGetAllAnimalsResult struct {
-	Animal    string
-	BigNumber string
+type QueryCountBigNumbersResultInner struct {
+	Count string
 }
 
-func queryGetAllAnimals(ctx *context.Context, tx *sql.Tx) (_ []QueryGetAllAnimalsResult, err error) {
-	q := queries["GetAllAnimals"]
+type QueryCountBigNumbersResult struct {
+	Results []*QueryCountBigNumbersResultInner
+	Error   error
+	Result  sql.Result
+}
+
+func queryCountBigNumbers(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryCountBigNumbersResult) {
+	qr = &QueryCountBigNumbersResult{}
+	q := queries["CountBigNumbers"]
 	base, err := getPreparedStmt(q.Query)
 	if err != nil {
+		qr.Error = err
 		return
 	}
 
-	var c context.Context
-	if ctx != nil {
-		c = *ctx
-	}
-
-	stmt, needClose := bindStmtCtxTx(base, c, tx)
+	stmt, needClose := bindStmtCtxTx(base, ctx, tx)
 	if needClose {
 		defer func() {
 			if cerr := stmt.Close(); err == nil && cerr != nil {
-				err = cerr
+				qr.Error = cerr
 			}
 		}()
 	}
 
-	var rows *sql.Rows
+	var ptrCount *string
 	if ctx != nil {
-		rows, err = stmt.QueryContext(*ctx)
+		err = stmt.QueryRowContext(ctx).Scan(&ptrCount)
 	} else {
-		rows, err = stmt.Query()
+		err = stmt.QueryRow().Scan(&ptrCount)
+	}
+	if errors.Is(err, sql.ErrNoRows) {
+		return
 	}
 	if err != nil {
+		qr.Error = err
 		return
 	}
-	defer rows.Close()
 
-	var out []QueryGetAllAnimalsResult
-	for rows.Next() {
-		var ptrAnimal *string
-		var ptrBigNumber *string
-		if err = rows.Scan(&ptrAnimal, &ptrBigNumber); err != nil {
-			return
-		}
-		x := QueryGetAllAnimalsResult{}
-		if ptrAnimal != nil {
-			x.Animal = *ptrAnimal
-		} else {
-			x.Animal = ""
-		}
-		if ptrBigNumber != nil {
-			x.BigNumber = *ptrBigNumber
-		} else {
-			x.BigNumber = ""
-		}
-		out = append(out, x)
+	x := &QueryCountBigNumbersResultInner{}
+	if ptrCount != nil {
+		x.Count = *ptrCount
+	} else {
+		x.Count = ""
 	}
-	if err = rows.Err(); err != nil {
-		return
-	}
-	return out, nil
+	qr.Results = append(qr.Results, x)
+	return
 }
 
-func QueryGetAllAnimals() ([]QueryGetAllAnimalsResult, error) { return queryGetAllAnimals(nil, nil) }
-func QueryGetAllAnimalsCtx(ctx context.Context) ([]QueryGetAllAnimalsResult, error) {
-	return queryGetAllAnimals(&ctx, nil)
+func QueryCountBigNumbers() *QueryCountBigNumbersResult { return queryCountBigNumbers(nil, nil, nil) }
+func QueryCountBigNumbersCtx(ctx context.Context) *QueryCountBigNumbersResult {
+	return queryCountBigNumbers(ctx, nil, nil)
 }
-func QueryGetAllAnimalsTx(tx *sql.Tx) ([]QueryGetAllAnimalsResult, error) {
-	return queryGetAllAnimals(nil, tx)
+func QueryCountBigNumbersTx(tx *sql.Tx) *QueryCountBigNumbersResult {
+	return queryCountBigNumbers(nil, tx, nil)
 }
-func QueryGetAllAnimalsCtxTx(ctx context.Context, tx *sql.Tx) ([]QueryGetAllAnimalsResult, error) {
-	return queryGetAllAnimals(&ctx, tx)
-}
-
-type QueryGetRecentCatsResult struct {
-	Uuid       string
-	LastUpdate string
+func QueryCountBigNumbersCtxTx(ctx context.Context, tx *sql.Tx) *QueryCountBigNumbersResult {
+	return queryCountBigNumbers(ctx, tx, nil)
 }
 
-func queryGetRecentCats(ctx *context.Context, tx *sql.Tx) (_ []QueryGetRecentCatsResult, err error) {
-	q := queries["GetRecentCats"]
+type QueryDeleteByUuidResult struct {
+	Error  error
+	Result sql.Result
+}
+
+func queryDeleteByUuid(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryDeleteByUuidResult) {
+	qr = &QueryDeleteByUuidResult{}
+	q := queries["DeleteByUuid"]
 	base, err := getPreparedStmt(q.Query)
 	if err != nil {
+		qr.Error = err
 		return
 	}
 
-	var c context.Context
-	if ctx != nil {
-		c = *ctx
-	}
-
-	stmt, needClose := bindStmtCtxTx(base, c, tx)
+	stmt, needClose := bindStmtCtxTx(base, ctx, tx)
 	if needClose {
 		defer func() {
 			if cerr := stmt.Close(); err == nil && cerr != nil {
-				err = cerr
+				qr.Error = cerr
 			}
 		}()
 	}
 
-	var rows *sql.Rows
+	var res sql.Result
 	if ctx != nil {
-		rows, err = stmt.QueryContext(*ctx)
+		res, err = stmt.ExecContext(ctx, params.Params...)
 	} else {
-		rows, err = stmt.Query()
+		res, err = stmt.Exec(params.Params...)
 	}
+	qr.Result = res
+	qr.Error = err
+	return
+}
+
+func ExecDeleteByUuid(params *QueryParams) *QueryDeleteByUuidResult {
+	return queryDeleteByUuid(nil, nil, params)
+}
+func ExecDeleteByUuidCtx(ctx context.Context, params *QueryParams) *QueryDeleteByUuidResult {
+	return queryDeleteByUuid(ctx, nil, params)
+}
+func ExecDeleteByUuidTx(tx *sql.Tx, params *QueryParams) *QueryDeleteByUuidResult {
+	return queryDeleteByUuid(nil, tx, params)
+}
+func ExecDeleteByUuidCtxTx(ctx context.Context, tx *sql.Tx, params *QueryParams) *QueryDeleteByUuidResult {
+	return queryDeleteByUuid(ctx, tx, params)
+}
+
+type QueryDeleteOldRowsResult struct {
+	Error  error
+	Result sql.Result
+}
+
+func queryDeleteOldRows(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryDeleteOldRowsResult) {
+	qr = &QueryDeleteOldRowsResult{}
+	q := queries["DeleteOldRows"]
+	base, err := getPreparedStmt(q.Query)
 	if err != nil {
+		qr.Error = err
 		return
 	}
-	defer rows.Close()
 
-	var out []QueryGetRecentCatsResult
-	for rows.Next() {
-		var ptrUuid *string
-		var ptrLastUpdate *string
-		if err = rows.Scan(&ptrUuid, &ptrLastUpdate); err != nil {
-			return
-		}
-		x := QueryGetRecentCatsResult{}
-		if ptrUuid != nil {
-			x.Uuid = *ptrUuid
-		} else {
-			x.Uuid = ""
-		}
-		if ptrLastUpdate != nil {
-			x.LastUpdate = *ptrLastUpdate
-		} else {
-			x.LastUpdate = ""
-		}
-		out = append(out, x)
+	stmt, needClose := bindStmtCtxTx(base, ctx, tx)
+	if needClose {
+		defer func() {
+			if cerr := stmt.Close(); err == nil && cerr != nil {
+				qr.Error = cerr
+			}
+		}()
 	}
-	if err = rows.Err(); err != nil {
-		return
+
+	var res sql.Result
+	if ctx != nil {
+		res, err = stmt.ExecContext(ctx)
+	} else {
+		res, err = stmt.Exec()
 	}
-	return out, nil
+	qr.Result = res
+	qr.Error = err
+	return
 }
 
-func QueryGetRecentCats() ([]QueryGetRecentCatsResult, error) { return queryGetRecentCats(nil, nil) }
-func QueryGetRecentCatsCtx(ctx context.Context) ([]QueryGetRecentCatsResult, error) {
-	return queryGetRecentCats(&ctx, nil)
+func ExecDeleteOldRows() *QueryDeleteOldRowsResult { return queryDeleteOldRows(nil, nil, nil) }
+func ExecDeleteOldRowsCtx(ctx context.Context) *QueryDeleteOldRowsResult {
+	return queryDeleteOldRows(ctx, nil, nil)
 }
-func QueryGetRecentCatsTx(tx *sql.Tx) ([]QueryGetRecentCatsResult, error) {
-	return queryGetRecentCats(nil, tx)
+func ExecDeleteOldRowsTx(tx *sql.Tx) *QueryDeleteOldRowsResult {
+	return queryDeleteOldRows(nil, tx, nil)
 }
-func QueryGetRecentCatsCtxTx(ctx context.Context, tx *sql.Tx) ([]QueryGetRecentCatsResult, error) {
-	return queryGetRecentCats(&ctx, tx)
+func ExecDeleteOldRowsCtxTx(ctx context.Context, tx *sql.Tx) *QueryDeleteOldRowsResult {
+	return queryDeleteOldRows(ctx, tx, nil)
 }
 
-type QueryGetByUuidResult struct {
+type QueryGetByUuidResultInner struct {
 	Animal    string
 	TestField string
 }
 
-func queryGetByUuid(ctx *context.Context, tx *sql.Tx, args ...any) (_ *QueryGetByUuidResult, err error) {
+type QueryGetByUuidResult struct {
+	Results []*QueryGetByUuidResultInner
+	Error   error
+	Result  sql.Result
+}
+
+func queryGetByUuid(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryGetByUuidResult) {
+	qr = &QueryGetByUuidResult{}
 	q := queries["GetByUuid"]
 	base, err := getPreparedStmt(q.Query)
 	if err != nil {
+		qr.Error = err
 		return
 	}
 
-	var c context.Context
-	if ctx != nil {
-		c = *ctx
-	}
-
-	stmt, needClose := bindStmtCtxTx(base, c, tx)
+	stmt, needClose := bindStmtCtxTx(base, ctx, tx)
 	if needClose {
 		defer func() {
 			if cerr := stmt.Close(); err == nil && cerr != nil {
-				err = cerr
+				qr.Error = cerr
 			}
 		}()
 	}
@@ -301,18 +323,19 @@ func queryGetByUuid(ctx *context.Context, tx *sql.Tx, args ...any) (_ *QueryGetB
 	var ptrAnimal *string
 	var ptrTestField *string
 	if ctx != nil {
-		err = stmt.QueryRowContext(*ctx, args...).Scan(&ptrAnimal, &ptrTestField)
+		err = stmt.QueryRowContext(ctx, params.Params...).Scan(&ptrAnimal, &ptrTestField)
 	} else {
-		err = stmt.QueryRow(args...).Scan(&ptrAnimal, &ptrTestField)
+		err = stmt.QueryRow(params.Params...).Scan(&ptrAnimal, &ptrTestField)
 	}
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
+		return
 	}
 	if err != nil {
+		qr.Error = err
 		return
 	}
 
-	x := &QueryGetByUuidResult{}
+	x := &QueryGetByUuidResultInner{}
 	if ptrAnimal != nil {
 		x.Animal = *ptrAnimal
 	} else {
@@ -323,341 +346,220 @@ func queryGetByUuid(ctx *context.Context, tx *sql.Tx, args ...any) (_ *QueryGetB
 	} else {
 		x.TestField = ""
 	}
-	return x, nil
+	qr.Results = append(qr.Results, x)
+	return
 }
 
-func QueryGetByUuid(args ...any) (*QueryGetByUuidResult, error) {
-	return queryGetByUuid(nil, nil, args...)
+func QueryGetByUuid(params *QueryParams) *QueryGetByUuidResult {
+	return queryGetByUuid(nil, nil, params)
 }
-func QueryGetByUuidCtx(ctx context.Context, args ...any) (*QueryGetByUuidResult, error) {
-	return queryGetByUuid(&ctx, nil, args...)
+func QueryGetByUuidCtx(ctx context.Context, params *QueryParams) *QueryGetByUuidResult {
+	return queryGetByUuid(ctx, nil, params)
 }
-func QueryGetByUuidTx(tx *sql.Tx, args ...any) (*QueryGetByUuidResult, error) {
-	return queryGetByUuid(nil, tx, args...)
+func QueryGetByUuidTx(tx *sql.Tx, params *QueryParams) *QueryGetByUuidResult {
+	return queryGetByUuid(nil, tx, params)
 }
-func QueryGetByUuidCtxTx(ctx context.Context, tx *sql.Tx, args ...any) (*QueryGetByUuidResult, error) {
-	return queryGetByUuid(&ctx, tx, args...)
-}
-
-type QueryCountNullBigNumbersResult struct {
-	Count string
+func QueryGetByUuidCtxTx(ctx context.Context, tx *sql.Tx, params *QueryParams) *QueryGetByUuidResult {
+	return queryGetByUuid(ctx, tx, params)
 }
 
-func queryCountNullBigNumbers(ctx *context.Context, tx *sql.Tx) (_ *QueryCountNullBigNumbersResult, err error) {
-	q := queries["CountNullBigNumbers"]
+type QueryGetRecentCatsResultInner struct {
+	Uuid       string
+	LastUpdate string
+}
+
+type QueryGetRecentCatsResult struct {
+	Results []*QueryGetRecentCatsResultInner
+	Error   error
+	Result  sql.Result
+}
+
+func queryGetRecentCats(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryGetRecentCatsResult) {
+	qr = &QueryGetRecentCatsResult{}
+	q := queries["GetRecentCats"]
 	base, err := getPreparedStmt(q.Query)
 	if err != nil {
+		qr.Error = err
 		return
 	}
 
-	var c context.Context
-	if ctx != nil {
-		c = *ctx
-	}
-
-	stmt, needClose := bindStmtCtxTx(base, c, tx)
+	stmt, needClose := bindStmtCtxTx(base, ctx, tx)
 	if needClose {
 		defer func() {
 			if cerr := stmt.Close(); err == nil && cerr != nil {
-				err = cerr
+				qr.Error = cerr
 			}
 		}()
 	}
 
-	var ptrCount *string
+	var rows *sql.Rows
 	if ctx != nil {
-		err = stmt.QueryRowContext(*ctx).Scan(&ptrCount)
+		rows, err = stmt.QueryContext(ctx)
 	} else {
-		err = stmt.QueryRow().Scan(&ptrCount)
-	}
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
+		rows, err = stmt.Query()
 	}
 	if err != nil {
+		qr.Error = err
 		return
 	}
+	defer rows.Close()
 
-	x := &QueryCountNullBigNumbersResult{}
-	if ptrCount != nil {
-		x.Count = *ptrCount
-	} else {
-		x.Count = ""
+	for rows.Next() {
+		var ptrUuid *string
+		var ptrLastUpdate *string
+		if err = rows.Scan(&ptrUuid, &ptrLastUpdate); err != nil {
+			qr.Error = err
+			return
+		}
+		x := QueryGetRecentCatsResultInner{}
+		if ptrUuid != nil {
+			x.Uuid = *ptrUuid
+		} else {
+			x.Uuid = ""
+		}
+		if ptrLastUpdate != nil {
+			x.LastUpdate = *ptrLastUpdate
+		} else {
+			x.LastUpdate = ""
+		}
+		qr.Results = append(qr.Results, &x)
 	}
-	return x, nil
-}
-
-func QueryCountNullBigNumbers() (*QueryCountNullBigNumbersResult, error) {
-	return queryCountNullBigNumbers(nil, nil)
-}
-func QueryCountNullBigNumbersCtx(ctx context.Context) (*QueryCountNullBigNumbersResult, error) {
-	return queryCountNullBigNumbers(&ctx, nil)
-}
-func QueryCountNullBigNumbersTx(tx *sql.Tx) (*QueryCountNullBigNumbersResult, error) {
-	return queryCountNullBigNumbers(nil, tx)
-}
-func QueryCountNullBigNumbersCtxTx(ctx context.Context, tx *sql.Tx) (*QueryCountNullBigNumbersResult, error) {
-	return queryCountNullBigNumbers(&ctx, tx)
-}
-
-func queryInsertOne(ctx *context.Context, tx *sql.Tx, args ...any) (res sql.Result, err error) {
-	q := queries["InsertOne"]
-	base, err := getPreparedStmt(q.Query)
-	if err != nil {
+	if err = rows.Err(); err != nil {
+		qr.Error = err
 		return
-	}
-
-	var c context.Context
-	if ctx != nil {
-		c = *ctx
-	}
-
-	stmt, needClose := bindStmtCtxTx(base, c, tx)
-	if needClose {
-		defer func() {
-			if cerr := stmt.Close(); err == nil && cerr != nil {
-				err = cerr
-			}
-		}()
-	}
-
-	if ctx != nil {
-		res, err = stmt.ExecContext(*ctx, args...)
-	} else {
-		res, err = stmt.Exec(args...)
 	}
 	return
 }
 
-func ExecInsertOne(args ...any) (sql.Result, error) { return queryInsertOne(nil, nil, args...) }
-func ExecInsertOneCtx(ctx context.Context, args ...any) (sql.Result, error) {
-	return queryInsertOne(&ctx, nil, args...)
+func QueryGetRecentCats() *QueryGetRecentCatsResult { return queryGetRecentCats(nil, nil, nil) }
+func QueryGetRecentCatsCtx(ctx context.Context) *QueryGetRecentCatsResult {
+	return queryGetRecentCats(ctx, nil, nil)
 }
-func ExecInsertOneTx(tx *sql.Tx, args ...any) (sql.Result, error) {
-	return queryInsertOne(nil, tx, args...)
+func QueryGetRecentCatsTx(tx *sql.Tx) *QueryGetRecentCatsResult {
+	return queryGetRecentCats(nil, tx, nil)
 }
-func ExecInsertOneCtxTx(ctx context.Context, tx *sql.Tx, args ...any) (sql.Result, error) {
-	return queryInsertOne(&ctx, tx, args...)
+func QueryGetRecentCatsCtxTx(ctx context.Context, tx *sql.Tx) *QueryGetRecentCatsResult {
+	return queryGetRecentCats(ctx, tx, nil)
 }
 
-func queryInsertHardcoded(ctx *context.Context, tx *sql.Tx) (res sql.Result, err error) {
+type QueryInsertHardcodedResult struct {
+	Error  error
+	Result sql.Result
+}
+
+func queryInsertHardcoded(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryInsertHardcodedResult) {
+	qr = &QueryInsertHardcodedResult{}
 	q := queries["InsertHardcoded"]
 	base, err := getPreparedStmt(q.Query)
 	if err != nil {
+		qr.Error = err
 		return
 	}
 
-	var c context.Context
-	if ctx != nil {
-		c = *ctx
-	}
-
-	stmt, needClose := bindStmtCtxTx(base, c, tx)
+	stmt, needClose := bindStmtCtxTx(base, ctx, tx)
 	if needClose {
 		defer func() {
 			if cerr := stmt.Close(); err == nil && cerr != nil {
-				err = cerr
+				qr.Error = cerr
 			}
 		}()
 	}
 
+	var res sql.Result
 	if ctx != nil {
-		res, err = stmt.ExecContext(*ctx)
+		res, err = stmt.ExecContext(ctx)
 	} else {
 		res, err = stmt.Exec()
 	}
+	qr.Result = res
+	qr.Error = err
 	return
 }
 
-func ExecInsertHardcoded() (sql.Result, error) { return queryInsertHardcoded(nil, nil) }
-func ExecInsertHardcodedCtx(ctx context.Context) (sql.Result, error) {
-	return queryInsertHardcoded(&ctx, nil)
+func ExecInsertHardcoded() *QueryInsertHardcodedResult { return queryInsertHardcoded(nil, nil, nil) }
+func ExecInsertHardcodedCtx(ctx context.Context) *QueryInsertHardcodedResult {
+	return queryInsertHardcoded(ctx, nil, nil)
 }
-func ExecInsertHardcodedTx(tx *sql.Tx) (sql.Result, error) { return queryInsertHardcoded(nil, tx) }
-func ExecInsertHardcodedCtxTx(ctx context.Context, tx *sql.Tx) (sql.Result, error) {
-	return queryInsertHardcoded(&ctx, tx)
+func ExecInsertHardcodedTx(tx *sql.Tx) *QueryInsertHardcodedResult {
+	return queryInsertHardcoded(nil, tx, nil)
+}
+func ExecInsertHardcodedCtxTx(ctx context.Context, tx *sql.Tx) *QueryInsertHardcodedResult {
+	return queryInsertHardcoded(ctx, tx, nil)
 }
 
-func queryUpdateAnimalName(ctx *context.Context, tx *sql.Tx, args ...any) (res sql.Result, err error) {
-	q := queries["UpdateAnimalName"]
+type QueryInsertOneResult struct {
+	Error  error
+	Result sql.Result
+}
+
+func queryInsertOne(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryInsertOneResult) {
+	qr = &QueryInsertOneResult{}
+	q := queries["InsertOne"]
 	base, err := getPreparedStmt(q.Query)
 	if err != nil {
+		qr.Error = err
 		return
 	}
 
-	var c context.Context
-	if ctx != nil {
-		c = *ctx
-	}
-
-	stmt, needClose := bindStmtCtxTx(base, c, tx)
+	stmt, needClose := bindStmtCtxTx(base, ctx, tx)
 	if needClose {
 		defer func() {
 			if cerr := stmt.Close(); err == nil && cerr != nil {
-				err = cerr
+				qr.Error = cerr
 			}
 		}()
 	}
 
+	var res sql.Result
 	if ctx != nil {
-		res, err = stmt.ExecContext(*ctx, args...)
+		res, err = stmt.ExecContext(ctx, params.Params...)
 	} else {
-		res, err = stmt.Exec(args...)
+		res, err = stmt.Exec(params.Params...)
 	}
+	qr.Result = res
+	qr.Error = err
 	return
 }
 
-func ExecUpdateAnimalName(args ...any) (sql.Result, error) {
-	return queryUpdateAnimalName(nil, nil, args...)
+func ExecInsertOne(params *QueryParams) *QueryInsertOneResult {
+	return queryInsertOne(nil, nil, params)
 }
-func ExecUpdateAnimalNameCtx(ctx context.Context, args ...any) (sql.Result, error) {
-	return queryUpdateAnimalName(&ctx, nil, args...)
+func ExecInsertOneCtx(ctx context.Context, params *QueryParams) *QueryInsertOneResult {
+	return queryInsertOne(ctx, nil, params)
 }
-func ExecUpdateAnimalNameTx(tx *sql.Tx, args ...any) (sql.Result, error) {
-	return queryUpdateAnimalName(nil, tx, args...)
+func ExecInsertOneTx(tx *sql.Tx, params *QueryParams) *QueryInsertOneResult {
+	return queryInsertOne(nil, tx, params)
 }
-func ExecUpdateAnimalNameCtxTx(ctx context.Context, tx *sql.Tx, args ...any) (sql.Result, error) {
-	return queryUpdateAnimalName(&ctx, tx, args...)
-}
-
-func queryUpdateTestField(ctx *context.Context, tx *sql.Tx) (res sql.Result, err error) {
-	q := queries["UpdateTestField"]
-	base, err := getPreparedStmt(q.Query)
-	if err != nil {
-		return
-	}
-
-	var c context.Context
-	if ctx != nil {
-		c = *ctx
-	}
-
-	stmt, needClose := bindStmtCtxTx(base, c, tx)
-	if needClose {
-		defer func() {
-			if cerr := stmt.Close(); err == nil && cerr != nil {
-				err = cerr
-			}
-		}()
-	}
-
-	if ctx != nil {
-		res, err = stmt.ExecContext(*ctx)
-	} else {
-		res, err = stmt.Exec()
-	}
-	return
+func ExecInsertOneCtxTx(ctx context.Context, tx *sql.Tx, params *QueryParams) *QueryInsertOneResult {
+	return queryInsertOne(ctx, tx, params)
 }
 
-func ExecUpdateTestField() (sql.Result, error) { return queryUpdateTestField(nil, nil) }
-func ExecUpdateTestFieldCtx(ctx context.Context) (sql.Result, error) {
-	return queryUpdateTestField(&ctx, nil)
-}
-func ExecUpdateTestFieldTx(tx *sql.Tx) (sql.Result, error) { return queryUpdateTestField(nil, tx) }
-func ExecUpdateTestFieldCtxTx(ctx context.Context, tx *sql.Tx) (sql.Result, error) {
-	return queryUpdateTestField(&ctx, tx)
-}
-
-func queryDeleteByUuid(ctx *context.Context, tx *sql.Tx, args ...any) (res sql.Result, err error) {
-	q := queries["DeleteByUuid"]
-	base, err := getPreparedStmt(q.Query)
-	if err != nil {
-		return
-	}
-
-	var c context.Context
-	if ctx != nil {
-		c = *ctx
-	}
-
-	stmt, needClose := bindStmtCtxTx(base, c, tx)
-	if needClose {
-		defer func() {
-			if cerr := stmt.Close(); err == nil && cerr != nil {
-				err = cerr
-			}
-		}()
-	}
-
-	if ctx != nil {
-		res, err = stmt.ExecContext(*ctx, args...)
-	} else {
-		res, err = stmt.Exec(args...)
-	}
-	return
-}
-
-func ExecDeleteByUuid(args ...any) (sql.Result, error) { return queryDeleteByUuid(nil, nil, args...) }
-func ExecDeleteByUuidCtx(ctx context.Context, args ...any) (sql.Result, error) {
-	return queryDeleteByUuid(&ctx, nil, args...)
-}
-func ExecDeleteByUuidTx(tx *sql.Tx, args ...any) (sql.Result, error) {
-	return queryDeleteByUuid(nil, tx, args...)
-}
-func ExecDeleteByUuidCtxTx(ctx context.Context, tx *sql.Tx, args ...any) (sql.Result, error) {
-	return queryDeleteByUuid(&ctx, tx, args...)
-}
-
-func queryDeleteOldRows(ctx *context.Context, tx *sql.Tx) (res sql.Result, err error) {
-	q := queries["DeleteOldRows"]
-	base, err := getPreparedStmt(q.Query)
-	if err != nil {
-		return
-	}
-
-	var c context.Context
-	if ctx != nil {
-		c = *ctx
-	}
-
-	stmt, needClose := bindStmtCtxTx(base, c, tx)
-	if needClose {
-		defer func() {
-			if cerr := stmt.Close(); err == nil && cerr != nil {
-				err = cerr
-			}
-		}()
-	}
-
-	if ctx != nil {
-		res, err = stmt.ExecContext(*ctx)
-	} else {
-		res, err = stmt.Exec()
-	}
-	return
-}
-
-func ExecDeleteOldRows() (sql.Result, error) { return queryDeleteOldRows(nil, nil) }
-func ExecDeleteOldRowsCtx(ctx context.Context) (sql.Result, error) {
-	return queryDeleteOldRows(&ctx, nil)
-}
-func ExecDeleteOldRowsTx(tx *sql.Tx) (sql.Result, error) { return queryDeleteOldRows(nil, tx) }
-func ExecDeleteOldRowsCtxTx(ctx context.Context, tx *sql.Tx) (sql.Result, error) {
-	return queryDeleteOldRows(&ctx, tx)
-}
-
-type QuerySampleTestResult struct {
+type QuerySampleTestResultInner struct {
 	TotalStorageUsed     string
 	ReachedFileLimit     string
 	ExceededStorageLimit string
 }
 
-func querySampleTest(ctx *context.Context, tx *sql.Tx, args ...any) (_ *QuerySampleTestResult, err error) {
+type QuerySampleTestResult struct {
+	Results []*QuerySampleTestResultInner
+	Error   error
+	Result  sql.Result
+}
+
+func querySampleTest(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QuerySampleTestResult) {
+	qr = &QuerySampleTestResult{}
 	q := queries["SampleTest"]
 	base, err := getPreparedStmt(q.Query)
 	if err != nil {
+		qr.Error = err
 		return
 	}
 
-	var c context.Context
-	if ctx != nil {
-		c = *ctx
-	}
-
-	stmt, needClose := bindStmtCtxTx(base, c, tx)
+	stmt, needClose := bindStmtCtxTx(base, ctx, tx)
 	if needClose {
 		defer func() {
 			if cerr := stmt.Close(); err == nil && cerr != nil {
-				err = cerr
+				qr.Error = cerr
 			}
 		}()
 	}
@@ -666,18 +568,19 @@ func querySampleTest(ctx *context.Context, tx *sql.Tx, args ...any) (_ *QuerySam
 	var ptrReachedFileLimit *string
 	var ptrExceededStorageLimit *string
 	if ctx != nil {
-		err = stmt.QueryRowContext(*ctx, args...).Scan(&ptrTotalStorageUsed, &ptrReachedFileLimit, &ptrExceededStorageLimit)
+		err = stmt.QueryRowContext(ctx, params.Params...).Scan(&ptrTotalStorageUsed, &ptrReachedFileLimit, &ptrExceededStorageLimit)
 	} else {
-		err = stmt.QueryRow(args...).Scan(&ptrTotalStorageUsed, &ptrReachedFileLimit, &ptrExceededStorageLimit)
+		err = stmt.QueryRow(params.Params...).Scan(&ptrTotalStorageUsed, &ptrReachedFileLimit, &ptrExceededStorageLimit)
 	}
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, nil
+		return
 	}
 	if err != nil {
+		qr.Error = err
 		return
 	}
 
-	x := &QuerySampleTestResult{}
+	x := &QuerySampleTestResultInner{}
 	if ptrTotalStorageUsed != nil {
 		x.TotalStorageUsed = *ptrTotalStorageUsed
 	} else {
@@ -693,18 +596,111 @@ func querySampleTest(ctx *context.Context, tx *sql.Tx, args ...any) (_ *QuerySam
 	} else {
 		x.ExceededStorageLimit = ""
 	}
-	return x, nil
+	qr.Results = append(qr.Results, x)
+	return
 }
 
-func QuerySampleTest(args ...any) (*QuerySampleTestResult, error) {
-	return querySampleTest(nil, nil, args...)
+func QuerySampleTest(params *QueryParams) *QuerySampleTestResult {
+	return querySampleTest(nil, nil, params)
 }
-func QuerySampleTestCtx(ctx context.Context, args ...any) (*QuerySampleTestResult, error) {
-	return querySampleTest(&ctx, nil, args...)
+func QuerySampleTestCtx(ctx context.Context, params *QueryParams) *QuerySampleTestResult {
+	return querySampleTest(ctx, nil, params)
 }
-func QuerySampleTestTx(tx *sql.Tx, args ...any) (*QuerySampleTestResult, error) {
-	return querySampleTest(nil, tx, args...)
+func QuerySampleTestTx(tx *sql.Tx, params *QueryParams) *QuerySampleTestResult {
+	return querySampleTest(nil, tx, params)
 }
-func QuerySampleTestCtxTx(ctx context.Context, tx *sql.Tx, args ...any) (*QuerySampleTestResult, error) {
-	return querySampleTest(&ctx, tx, args...)
+func QuerySampleTestCtxTx(ctx context.Context, tx *sql.Tx, params *QueryParams) *QuerySampleTestResult {
+	return querySampleTest(ctx, tx, params)
+}
+
+type QueryUpdateAnimalNameResult struct {
+	Error  error
+	Result sql.Result
+}
+
+func queryUpdateAnimalName(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryUpdateAnimalNameResult) {
+	qr = &QueryUpdateAnimalNameResult{}
+	q := queries["UpdateAnimalName"]
+	base, err := getPreparedStmt(q.Query)
+	if err != nil {
+		qr.Error = err
+		return
+	}
+
+	stmt, needClose := bindStmtCtxTx(base, ctx, tx)
+	if needClose {
+		defer func() {
+			if cerr := stmt.Close(); err == nil && cerr != nil {
+				qr.Error = cerr
+			}
+		}()
+	}
+
+	var res sql.Result
+	if ctx != nil {
+		res, err = stmt.ExecContext(ctx, params.Params...)
+	} else {
+		res, err = stmt.Exec(params.Params...)
+	}
+	qr.Result = res
+	qr.Error = err
+	return
+}
+
+func ExecUpdateAnimalName(params *QueryParams) *QueryUpdateAnimalNameResult {
+	return queryUpdateAnimalName(nil, nil, params)
+}
+func ExecUpdateAnimalNameCtx(ctx context.Context, params *QueryParams) *QueryUpdateAnimalNameResult {
+	return queryUpdateAnimalName(ctx, nil, params)
+}
+func ExecUpdateAnimalNameTx(tx *sql.Tx, params *QueryParams) *QueryUpdateAnimalNameResult {
+	return queryUpdateAnimalName(nil, tx, params)
+}
+func ExecUpdateAnimalNameCtxTx(ctx context.Context, tx *sql.Tx, params *QueryParams) *QueryUpdateAnimalNameResult {
+	return queryUpdateAnimalName(ctx, tx, params)
+}
+
+type QueryUpdateTestFieldResult struct {
+	Error  error
+	Result sql.Result
+}
+
+func queryUpdateTestField(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryUpdateTestFieldResult) {
+	qr = &QueryUpdateTestFieldResult{}
+	q := queries["UpdateTestField"]
+	base, err := getPreparedStmt(q.Query)
+	if err != nil {
+		qr.Error = err
+		return
+	}
+
+	stmt, needClose := bindStmtCtxTx(base, ctx, tx)
+	if needClose {
+		defer func() {
+			if cerr := stmt.Close(); err == nil && cerr != nil {
+				qr.Error = cerr
+			}
+		}()
+	}
+
+	var res sql.Result
+	if ctx != nil {
+		res, err = stmt.ExecContext(ctx)
+	} else {
+		res, err = stmt.Exec()
+	}
+	qr.Result = res
+	qr.Error = err
+	return
+}
+
+func ExecUpdateTestField() *QueryUpdateTestFieldResult { return queryUpdateTestField(nil, nil, nil) }
+func ExecUpdateTestFieldCtx(ctx context.Context) *QueryUpdateTestFieldResult {
+	return queryUpdateTestField(ctx, nil, nil)
+}
+func ExecUpdateTestFieldTx(tx *sql.Tx) *QueryUpdateTestFieldResult {
+	return queryUpdateTestField(nil, tx, nil)
+}
+func ExecUpdateTestFieldCtxTx(ctx context.Context, tx *sql.Tx) *QueryUpdateTestFieldResult {
+	return queryUpdateTestField(ctx, tx, nil)
 }

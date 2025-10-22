@@ -46,12 +46,12 @@ func TestMain(m *testing.M) {
 			return err
 		},
 		UnloadResources: func() error {
-			_, err := DBTruncate()
-			if err != nil {
-				return err
+			result := DBTruncate()
+			if result.Error != nil {
+				return result.Error
 			}
 
-			err = cXorm.Close()
+			err := cXorm.Close()
 			if err != nil {
 				return err
 			}
@@ -72,9 +72,9 @@ func TestEntityDBInsertWithUuid(t *testing.T) {
 		Animal: "Cat",
 	}
 
-	_, err := e.DBInsert([]string{FieldUuid, FieldAnimal})
-	if err != nil {
-		t.Fatal(err)
+	result := e.DBInsert(NewQueryParams().WithInsert(FieldUuid, FieldAnimal))
+	if result.Error != nil {
+		t.Fatal(result.Error)
 	}
 }
 
@@ -84,14 +84,14 @@ func TestEntityDBInsertWithUuidAndDelete(t *testing.T) {
 		Animal: "Dog",
 	}
 
-	_, err := e.DBInsert([]string{FieldUuid, FieldAnimal})
-	if err != nil {
-		t.Fatal(err)
+	result := e.DBInsert(NewQueryParams().WithInsert(FieldUuid, FieldAnimal))
+	if result.Error != nil {
+		t.Fatal(result.Error)
 	}
 
-	_, err = e.DBDeleteWhereAll([]string{FieldUuid})
-	if err != nil {
-		t.Fatal(err)
+	result = e.DBDelete(NewQueryParams().WithWhere(FieldUuid))
+	if result.Error != nil {
+		t.Fatal(result.Error)
 	}
 }
 
@@ -102,18 +102,18 @@ func TestEntityDBSelectAll(t *testing.T) {
 		Animal: "Fox",
 	}
 
-	_, err := entity.DBInsert([]string{FieldUuid, FieldAnimal})
-	if err != nil {
-		t.Fatal(err)
+	result := entity.DBInsert(NewQueryParams().WithInsert(FieldUuid, FieldAnimal))
+	if result.Error != nil {
+		t.Fatal(result.Error)
 	}
 
-	entities, err := DBSelectAll()
-	if err != nil {
-		t.Fatal(err)
+	result = DBSelectAll()
+	if result.Error != nil {
+		t.Fatal(result.Error)
 	}
 
 	found := false
-	for _, e := range entities {
+	for _, e := range result.Entities {
 		if e.Uuid == u && e.Animal == "Fox" {
 			found = true
 			break

@@ -141,9 +141,9 @@ type QueryCountBigNumbersResultInner struct {
 }
 
 type QueryCountBigNumbersResult struct {
-	Results []*QueryCountBigNumbersResultInner
-	Error   error
-	Result  sql.Result
+	Entity *QueryCountBigNumbersResultInner
+	Error  error
+	Result sql.Result
 }
 
 func queryCountBigNumbers(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryCountBigNumbersResult) {
@@ -184,7 +184,7 @@ func queryCountBigNumbers(ctx context.Context, tx *sql.Tx, params *QueryParams) 
 	} else {
 		x.Count = ""
 	}
-	qr.Results = append(qr.Results, x)
+	qr.Entity = x
 	return
 }
 
@@ -297,9 +297,9 @@ type QueryGetByUuidResultInner struct {
 }
 
 type QueryGetByUuidResult struct {
-	Results []*QueryGetByUuidResultInner
-	Error   error
-	Result  sql.Result
+	Entity *QueryGetByUuidResultInner
+	Error  error
+	Result sql.Result
 }
 
 func queryGetByUuid(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryGetByUuidResult) {
@@ -346,7 +346,7 @@ func queryGetByUuid(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *Q
 	} else {
 		x.TestField = ""
 	}
-	qr.Results = append(qr.Results, x)
+	qr.Entity = x
 	return
 }
 
@@ -369,9 +369,9 @@ type QueryGetRecentCatsResultInner struct {
 }
 
 type QueryGetRecentCatsResult struct {
-	Results []*QueryGetRecentCatsResultInner
-	Error   error
-	Result  sql.Result
+	Entities []*QueryGetRecentCatsResultInner
+	Error    error
+	Result   sql.Result
 }
 
 func queryGetRecentCats(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryGetRecentCatsResult) {
@@ -422,7 +422,7 @@ func queryGetRecentCats(ctx context.Context, tx *sql.Tx, params *QueryParams) (q
 		} else {
 			x.LastUpdate = ""
 		}
-		qr.Results = append(qr.Results, &x)
+		qr.Entities = append(qr.Entities, &x)
 	}
 	if err = rows.Err(); err != nil {
 		qr.Error = err
@@ -541,9 +541,9 @@ type QuerySampleTestResultInner struct {
 }
 
 type QuerySampleTestResult struct {
-	Results []*QuerySampleTestResultInner
-	Error   error
-	Result  sql.Result
+	Entity *QuerySampleTestResultInner
+	Error  error
+	Result sql.Result
 }
 
 func querySampleTest(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QuerySampleTestResult) {
@@ -596,7 +596,7 @@ func querySampleTest(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *
 	} else {
 		x.ExceededStorageLimit = ""
 	}
-	qr.Results = append(qr.Results, x)
+	qr.Entity = x
 	return
 }
 

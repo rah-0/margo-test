@@ -108,7 +108,7 @@ func TestQueryGetRecentCats(t *testing.T) {
 	}
 
 	found := false
-	for _, r := range qr.Results {
+	for _, r := range qr.Entities {
 		if r.Uuid == u {
 			found = true
 			break
@@ -116,7 +116,7 @@ func TestQueryGetRecentCats(t *testing.T) {
 	}
 
 	if !found {
-		t.Errorf("expected row with uuid %s not found in results: %+v", u, qr.Results)
+		t.Errorf("expected row with uuid %s not found in results: %+v", u, qr.Entities)
 	}
 }
 
@@ -144,15 +144,15 @@ func TestQueryGetByUuid(t *testing.T) {
 	}
 
 	found := false
-	if len(qr.Results) > 0 {
-		r := qr.Results[0]
+	if qr.Entity != nil {
+		r := qr.Entity
 		if r.Animal == "dog" && r.TestField == "unique" {
 			found = true
 		}
 	}
 
 	if !found {
-		t.Errorf("expected row with Animal=dog and TestField=unique not found in results: %+v", qr.Results)
+		t.Errorf("expected row with Animal=dog and TestField=unique not found, got: %+v", qr.Entity)
 	}
 }
 
@@ -183,13 +183,13 @@ func TestQueryCountBigNumbers(t *testing.T) {
 		t.Fatal("query failed:", qr.Error)
 	}
 
-	if len(qr.Results) == 0 {
-		t.Fatal("no results returned")
+	if qr.Entity == nil {
+		t.Fatal("no result returned")
 	}
 
-	count, err := strconv.Atoi(qr.Results[0].Count)
+	count, err := strconv.Atoi(qr.Entity.Count)
 	if err != nil {
-		t.Fatalf("invalid count returned: %v", qr.Results[0].Count)
+		t.Fatalf("invalid count returned: %v", qr.Entity.Count)
 	}
 
 	if count < 1 {
@@ -208,8 +208,8 @@ func TestExecInsertOne(t *testing.T) {
 	if r.Error != nil {
 		t.Fatal("query failed:", r.Error)
 	}
-	if len(r.Results) == 0 || r.Results[0].Animal != "hedgehog" || r.Results[0].TestField != "tf" {
-		t.Fatalf("row not inserted as expected: %+v", r.Results)
+	if r.Entity == nil || r.Entity.Animal != "hedgehog" || r.Entity.TestField != "tf" {
+		t.Fatalf("row not inserted as expected: %+v", r.Entity)
 	}
 }
 
@@ -228,8 +228,8 @@ func TestExecInsertHardcoded(t *testing.T) {
 	if r.Error != nil {
 		t.Fatal("query failed:", r.Error)
 	}
-	if len(r.Results) == 0 || r.Results[0].Animal != "dog" {
-		t.Fatalf("expected Animal=dog for hardcoded uuid, got: %+v", r.Results)
+	if r.Entity == nil || r.Entity.Animal != "dog" {
+		t.Fatalf("expected Animal=dog for hardcoded uuid, got: %+v", r.Entity)
 	}
 }
 
@@ -258,8 +258,8 @@ func TestExecUpdateAnimalName(t *testing.T) {
 	if r.Error != nil {
 		t.Fatal("query failed:", r.Error)
 	}
-	if len(r.Results) == 0 || r.Results[0].Animal != "otter" {
-		t.Fatalf("expected Animal=otter after update, got: %+v", r.Results)
+	if r.Entity == nil || r.Entity.Animal != "otter" {
+		t.Fatalf("expected Animal=otter after update, got: %+v", r.Entity)
 	}
 }
 
@@ -288,8 +288,8 @@ func TestExecUpdateTestField(t *testing.T) {
 	if r.Error != nil {
 		t.Fatal("query failed:", r.Error)
 	}
-	if len(r.Results) == 0 || r.Results[0].TestField != "updated" {
-		t.Fatalf("expected test_field=updated after bulk update, got: %+v", r.Results)
+	if r.Entity == nil || r.Entity.TestField != "updated" {
+		t.Fatalf("expected test_field=updated after bulk update, got: %+v", r.Entity)
 	}
 }
 
@@ -318,8 +318,8 @@ func TestExecDeleteByUuid(t *testing.T) {
 	if r.Error != nil {
 		t.Fatal("query failed:", r.Error)
 	}
-	if len(r.Results) > 0 {
-		t.Fatalf("expected no row after delete, got: %+v", r.Results)
+	if r.Entity != nil {
+		t.Fatalf("expected no row after delete, got: %+v", r.Entity)
 	}
 }
 
@@ -363,15 +363,15 @@ func TestExecDeleteOldRows(t *testing.T) {
 	if ro.Error != nil {
 		t.Fatal("query old failed:", ro.Error)
 	}
-	if len(ro.Results) > 0 {
-		t.Fatalf("expected old row to be deleted, got: %+v", ro.Results)
+	if ro.Entity != nil {
+		t.Fatalf("expected old row to be deleted, got: %+v", ro.Entity)
 	}
 
 	rn := QueryGetByUuid(NewQueryParams().WithParams(newU))
 	if rn.Error != nil {
 		t.Fatal("query new failed:", rn.Error)
 	}
-	if len(rn.Results) == 0 || rn.Results[0].Animal != "bee" {
-		t.Fatalf("expected new row to remain, got: %+v", rn.Results)
+	if rn.Entity == nil || rn.Entity.Animal != "bee" {
+		t.Fatalf("expected new row to remain, got: %+v", rn.Entity)
 	}
 }

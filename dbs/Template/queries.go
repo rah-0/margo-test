@@ -144,6 +144,7 @@ type QueryCountBigNumbersResult struct {
 	Entity *QueryCountBigNumbersResultInner
 	Error  error
 	Result sql.Result
+	Exists bool
 }
 
 func queryCountBigNumbers(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryCountBigNumbersResult) {
@@ -185,6 +186,7 @@ func queryCountBigNumbers(ctx context.Context, tx *sql.Tx, params *QueryParams) 
 		x.Count = ""
 	}
 	qr.Entity = x
+	qr.Exists = true
 	return
 }
 
@@ -300,6 +302,7 @@ type QueryGetByUuidResult struct {
 	Entity *QueryGetByUuidResultInner
 	Error  error
 	Result sql.Result
+	Exists bool
 }
 
 func queryGetByUuid(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QueryGetByUuidResult) {
@@ -347,6 +350,7 @@ func queryGetByUuid(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *Q
 		x.TestField = ""
 	}
 	qr.Entity = x
+	qr.Exists = true
 	return
 }
 
@@ -544,6 +548,7 @@ type QuerySampleTestResult struct {
 	Entity *QuerySampleTestResultInner
 	Error  error
 	Result sql.Result
+	Exists bool
 }
 
 func querySampleTest(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *QuerySampleTestResult) {
@@ -597,6 +602,7 @@ func querySampleTest(ctx context.Context, tx *sql.Tx, params *QueryParams) (qr *
 		x.ExceededStorageLimit = ""
 	}
 	qr.Entity = x
+	qr.Exists = true
 	return
 }
 

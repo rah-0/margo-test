@@ -73,6 +73,7 @@ func (qp *QueryParams) WithParams(params ...any) *QueryParams {
 
 type QueryResult struct {
 	Entities []*Entity
+	Entity   *Entity
 	Error    error
 	Result   sql.Result
 	Exists   bool
@@ -311,6 +312,31 @@ func queryCore(ctx context.Context, tx *sql.Tx, fields []string, query string, a
 		return nil, err
 	}
 	return readRows(fields, rows)
+}
+
+func queryOneCore(ctx context.Context, tx *sql.Tx, fields []string, query string, args ...any) (*Entity, error) {
+	stmt, err := getPreparedStmt(query)
+	if err != nil {
+		return nil, err
+	}
+	s, needClose := bindStmtCtxTx(stmt, ctx, tx)
+	if needClose {
+		defer s.Close()
+	}
+	var rows *sql.Rows
+	if ctx != nil {
+		rows, err = s.QueryContext(ctx, args...)
+	} else {
+		rows, err = s.Query(args...)
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	if !rows.Next() {
+		return nil, nil
+	}
+	return scanRow(fields, rows)
 }
 
 func scalarCore(ctx context.Context, tx *sql.Tx, query string, args ...any) (int, error) {

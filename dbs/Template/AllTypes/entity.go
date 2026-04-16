@@ -960,8 +960,8 @@ func readRows(fields []string, rows *sql.Rows) (_ []*Entity, err error) {
 		}
 		results = append(results, x)
 	}
-	if err := rows.Err(); err != nil {
-		return results, err
+	if rerr := rows.Err(); rerr != nil {
+		return results, rerr
 	}
 	return results, nil
 }
@@ -1048,9 +1048,22 @@ func queryOneCore(ctx context.Context, tx *sql.Tx, fields []string, query string
 		}
 	}()
 	if !rows.Next() {
+		if rerr := rows.Err(); rerr != nil {
+			return nil, rerr
+		}
 		return nil, nil
 	}
-	return scanRow(fields, rows)
+	ent, err := scanRow(fields, rows)
+	if err != nil {
+		return nil, err
+	}
+	if rows.Next() {
+		return nil, errors.New("queryOneCore: expected one row, got multiple")
+	}
+	if rerr := rows.Err(); rerr != nil {
+		return nil, rerr
+	}
+	return ent, nil
 }
 
 func scalarCore(ctx context.Context, tx *sql.Tx, query string, args ...any) (_ int, err error) {

@@ -946,8 +946,12 @@ func scanRow(fields []string, rows *sql.Rows) (*Entity, error) {
 	return x, nil
 }
 
-func readRows(fields []string, rows *sql.Rows) ([]*Entity, error) {
-	defer rows.Close()
+func readRows(fields []string, rows *sql.Rows) (_ []*Entity, err error) {
+	defer func() {
+		if cerr := rows.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
 	var results []*Entity
 	for rows.Next() {
 		x, err := scanRow(fields, rows)
@@ -1016,14 +1020,18 @@ func queryCore(ctx context.Context, tx *sql.Tx, fields []string, query string, a
 	return readRows(fields, rows)
 }
 
-func queryOneCore(ctx context.Context, tx *sql.Tx, fields []string, query string, args ...any) (*Entity, error) {
+func queryOneCore(ctx context.Context, tx *sql.Tx, fields []string, query string, args ...any) (_ *Entity, err error) {
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return nil, err
 	}
 	s, needClose := bindStmtCtxTx(stmt, ctx, tx)
 	if needClose {
-		defer s.Close()
+		defer func() {
+			if cerr := s.Close(); err == nil && cerr != nil {
+				err = cerr
+			}
+		}()
 	}
 	var rows *sql.Rows
 	if ctx != nil {
@@ -1034,21 +1042,29 @@ func queryOneCore(ctx context.Context, tx *sql.Tx, fields []string, query string
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
 	if !rows.Next() {
 		return nil, nil
 	}
 	return scanRow(fields, rows)
 }
 
-func scalarCore(ctx context.Context, tx *sql.Tx, query string, args ...any) (int, error) {
+func scalarCore(ctx context.Context, tx *sql.Tx, query string, args ...any) (_ int, err error) {
 	stmt, err := getPreparedStmt(query)
 	if err != nil {
 		return 0, err
 	}
 	s, needClose := bindStmtCtxTx(stmt, ctx, tx)
 	if needClose {
-		defer s.Close()
+		defer func() {
+			if cerr := s.Close(); err == nil && cerr != nil {
+				err = cerr
+			}
+		}()
 	}
 	var v int
 	if ctx != nil {

@@ -406,7 +406,11 @@ func queryGetRecentCats(ctx context.Context, tx *sql.Tx, params *QueryParams) (q
 		qr.Error = err
 		return
 	}
-	defer rows.Close()
+	defer func() {
+		if cerr := rows.Close(); cerr != nil && qr.Error == nil {
+			qr.Error = cerr
+		}
+	}()
 
 	for rows.Next() {
 		var ptrUuid *string
